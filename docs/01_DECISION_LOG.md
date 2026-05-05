@@ -175,8 +175,25 @@ Solo procesa las reglas de `@JCA_DLC_RULE` donde `U_EntitySet = 'Quotations'` y 
 
 ---
 
+## D10 — PRD arranca en simulación; cierre real requiere confirmación explícita
+
+**Contexto:** El archivo `appsettings.PRD.json` define el comportamiento por defecto del sistema en producción. Un valor `DefaultSimulation = false` implica riesgo de cierre automático de documentos reales sin intervención explícita.
+
+**Decisión:** En ambiente PRD, `DefaultSimulation = true` por defecto. El cierre real de documentos requerirá en una versión futura un parámetro explícito:
+
+```
+--confirm-production-close
+```
+
+Este parámetro no está implementado en el MVP.
+
+**Impacto en código:** El sistema en PRD ejecuta siempre en modo simulación por defecto. No existe ejecución real sin intervención explícita futura.
+
+---
+
 ## Control de cambios
 
 | Versión | Fecha | Descripción |
 |---------|-------|-------------|
 | 1.0 | 2026-05-04 | Versión inicial — 9 decisiones aprobadas previo al desarrollo MVP |
+| 1.1 | 2026-05-04 | D10 agregado: PRD arranca en simulación por defecto |
