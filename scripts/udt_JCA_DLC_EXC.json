@@ -1,0 +1,30 @@
+// =============================================================================
+// UDT: @JCA_DLC_EXC — Exclusiones de documentos/socios
+// MVP: CRÍTICA. La aplicación abortará si esta UDT no existe en SAP B1.
+// Documentación: PRD sección 12.3
+// =============================================================================
+
+// PASO 1: Crear la tabla
+// POST https://{server}:50000/b1s/v1/UserTablesMD
+{
+  "TableName": "JCA_DLC_EXC",
+  "TableDescription": "Smart Doc Control - Exclusiones",
+  "TableType": "bott_MasterData"
+}
+
+// PASO 2: Campos
+
+// Campo U_Active
+{ "TableName": "@JCA_DLC_EXC", "Name": "Active", "Description": "Exclusion activa (Y/N)", "Type": "db_Alpha", "Size": 1 }
+
+// Campo U_ObjType
+{ "TableName": "@JCA_DLC_EXC", "Name": "ObjType", "Description": "Tipo objeto SAP o ALL para todos", "Type": "db_Alpha", "Size": 20 }
+
+// Campo U_ExcType
+{ "TableName": "@JCA_DLC_EXC", "Name": "ExcType", "Description": "Tipo de exclusion: CardCode/GroupCode/SlpCode/BPLId", "Type": "db_Alpha", "Size": 20 }
+
+// Campo U_ExcValue
+{ "TableName": "@JCA_DLC_EXC", "Name": "ExcValue", "Description": "Valor excluido (ej. C001 para CardCode)", "Type": "db_Alpha", "Size": 50 }
+
+// Campo U_Reason
+{ "TableName": "@JCA_DLC_EXC", "Name": "Reason", "Description": "Motivo de exclusion", "Type": "db_Memo" }
