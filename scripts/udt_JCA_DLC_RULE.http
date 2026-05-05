@@ -1,0 +1,254 @@
+@baseUrl = https://sap-server:50000/b1s/v1
+@session = replace-with-B1SESSION-cookie
+
+# =============================================================================
+# UDT: @JCA_DLC_RULE — Reglas generales de cierre documental
+# MVP: CRÍTICA. La aplicación abortará si esta UDT no existe en SAP B1.
+# Creación: Ejecutar los requests en orden como usuario B1 Admin.
+# Documentación: PRD sección 12.1
+# =============================================================================
+
+
+### PASO 1 — Crear tabla JCA_DLC_RULE
+POST {{baseUrl}}/UserTablesMD
+Cookie: B1SESSION={{session}}
+Content-Type: application/json
+
+{
+  "TableName": "JCA_DLC_RULE",
+  "TableDescription": "Smart Doc Control - Reglas de cierre",
+  "TableType": "bott_MasterData"
+}
+
+
+# =============================================================================
+# PASO 2 — Crear campos (ejecutar cada request por separado)
+# =============================================================================
+
+### Campo U_Active — Regla activa (Y/N)
+POST {{baseUrl}}/UserFieldsMD
+Cookie: B1SESSION={{session}}
+Content-Type: application/json
+
+{
+  "TableName": "@JCA_DLC_RULE",
+  "Name": "Active",
+  "Description": "Regla activa (Y/N)",
+  "Type": "db_Alpha",
+  "Size": 1
+}
+
+### Campo U_Priority — Prioridad de evaluacion
+POST {{baseUrl}}/UserFieldsMD
+Cookie: B1SESSION={{session}}
+Content-Type: application/json
+
+{
+  "TableName": "@JCA_DLC_RULE",
+  "Name": "Priority",
+  "Description": "Prioridad de evaluacion",
+  "Type": "db_Numeric"
+}
+
+### Campo U_ObjType — Tipo de objeto SAP
+POST {{baseUrl}}/UserFieldsMD
+Cookie: B1SESSION={{session}}
+Content-Type: application/json
+
+{
+  "TableName": "@JCA_DLC_RULE",
+  "Name": "ObjType",
+  "Description": "Tipo de objeto SAP (17/22/23/540000006)",
+  "Type": "db_Alpha",
+  "Size": 20
+}
+
+### Campo U_EntitySet — EntitySet Service Layer
+POST {{baseUrl}}/UserFieldsMD
+Cookie: B1SESSION={{session}}
+Content-Type: application/json
+
+{
+  "TableName": "@JCA_DLC_RULE",
+  "Name": "EntitySet",
+  "Description": "EntitySet Service Layer (ej. Quotations)",
+  "Type": "db_Alpha",
+  "Size": 50
+}
+
+### Campo U_BaseDate — Fecha base de calculo
+POST {{baseUrl}}/UserFieldsMD
+Cookie: B1SESSION={{session}}
+Content-Type: application/json
+
+{
+  "TableName": "@JCA_DLC_RULE",
+  "Name": "BaseDate",
+  "Description": "Fecha base: DocDate/TaxDate/DocDueDate/UpdateDate",
+  "Type": "db_Alpha",
+  "Size": 20
+}
+
+### Campo U_GraceDays — Dias de holgura
+POST {{baseUrl}}/UserFieldsMD
+Cookie: B1SESSION={{session}}
+Content-Type: application/json
+
+{
+  "TableName": "@JCA_DLC_RULE",
+  "Name": "GraceDays",
+  "Description": "Dias de holgura minimos para cierre",
+  "Type": "db_Numeric"
+}
+
+### Campo U_Simulation — Modo simulacion activo
+POST {{baseUrl}}/UserFieldsMD
+Cookie: B1SESSION={{session}}
+Content-Type: application/json
+
+{
+  "TableName": "@JCA_DLC_RULE",
+  "Name": "Simulation",
+  "Description": "Modo simulacion activo (Y/N)",
+  "Type": "db_Alpha",
+  "Size": 1
+}
+
+### Campo U_MaxPerRun — Maximo de documentos por ejecucion
+POST {{baseUrl}}/UserFieldsMD
+Cookie: B1SESSION={{session}}
+Content-Type: application/json
+
+{
+  "TableName": "@JCA_DLC_RULE",
+  "Name": "MaxPerRun",
+  "Description": "Maximo de documentos a cerrar por ejecucion",
+  "Type": "db_Numeric"
+}
+
+### Campo U_OnlyNoTarget — Solo cerrar si no tiene documento destino
+POST {{baseUrl}}/UserFieldsMD
+Cookie: B1SESSION={{session}}
+Content-Type: application/json
+
+{
+  "TableName": "@JCA_DLC_RULE",
+  "Name": "OnlyNoTarget",
+  "Description": "Solo cerrar si no tiene documento destino (Y/N)",
+  "Type": "db_Alpha",
+  "Size": 1
+}
+
+### Campo U_CheckLines — Validar lineas abiertas
+POST {{baseUrl}}/UserFieldsMD
+Cookie: B1SESSION={{session}}
+Content-Type: application/json
+
+{
+  "TableName": "@JCA_DLC_RULE",
+  "Name": "CheckLines",
+  "Description": "Validar lineas abiertas (Y/N)",
+  "Type": "db_Alpha",
+  "Size": 1
+}
+
+### Campo U_CheckUpdate — Validar actualizacion reciente
+POST {{baseUrl}}/UserFieldsMD
+Cookie: B1SESSION={{session}}
+Content-Type: application/json
+
+{
+  "TableName": "@JCA_DLC_RULE",
+  "Name": "CheckUpdate",
+  "Description": "Validar actualizacion reciente (Y/N)",
+  "Type": "db_Alpha",
+  "Size": 1
+}
+
+### Campo U_InactiveDays — Dias minimos sin actualizacion
+POST {{baseUrl}}/UserFieldsMD
+Cookie: B1SESSION={{session}}
+Content-Type: application/json
+
+{
+  "TableName": "@JCA_DLC_RULE",
+  "Name": "InactiveDays",
+  "Description": "Dias minimos sin actualizacion",
+  "Type": "db_Numeric"
+}
+
+### Campo U_MinTotal — Monto minimo del documento
+POST {{baseUrl}}/UserFieldsMD
+Cookie: B1SESSION={{session}}
+Content-Type: application/json
+
+{
+  "TableName": "@JCA_DLC_RULE",
+  "Name": "MinTotal",
+  "Description": "Monto minimo del documento",
+  "Type": "db_Float",
+  "SubType": "db_Sum"
+}
+
+### Campo U_MaxTotal — Monto maximo del documento
+POST {{baseUrl}}/UserFieldsMD
+Cookie: B1SESSION={{session}}
+Content-Type: application/json
+
+{
+  "TableName": "@JCA_DLC_RULE",
+  "Name": "MaxTotal",
+  "Description": "Monto maximo del documento",
+  "Type": "db_Float",
+  "SubType": "db_Sum"
+}
+
+# Campo U_ReqApproval — RESERVADO para version PRO
+### Campo U_ReqApproval — Requiere aprobacion (reservado PRO)
+POST {{baseUrl}}/UserFieldsMD
+Cookie: B1SESSION={{session}}
+Content-Type: application/json
+
+{
+  "TableName": "@JCA_DLC_RULE",
+  "Name": "ReqApproval",
+  "Description": "Requiere aprobacion - RESERVADO PRO (Y/N)",
+  "Type": "db_Alpha",
+  "Size": 1
+}
+
+### Campo U_CloseComment — Comentario funcional del cierre
+POST {{baseUrl}}/UserFieldsMD
+Cookie: B1SESSION={{session}}
+Content-Type: application/json
+
+{
+  "TableName": "@JCA_DLC_RULE",
+  "Name": "CloseComment",
+  "Description": "Comentario funcional del cierre",
+  "Type": "db_Memo"
+}
+
+### Campo U_ValidFrom — Vigente desde
+POST {{baseUrl}}/UserFieldsMD
+Cookie: B1SESSION={{session}}
+Content-Type: application/json
+
+{
+  "TableName": "@JCA_DLC_RULE",
+  "Name": "ValidFrom",
+  "Description": "Vigente desde (fecha)",
+  "Type": "db_Date"
+}
+
+### Campo U_ValidTo — Vigente hasta
+POST {{baseUrl}}/UserFieldsMD
+Cookie: B1SESSION={{session}}
+Content-Type: application/json
+
+{
+  "TableName": "@JCA_DLC_RULE",
+  "Name": "ValidTo",
+  "Description": "Vigente hasta (fecha)",
+  "Type": "db_Date"
+}

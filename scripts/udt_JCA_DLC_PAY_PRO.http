@@ -1,0 +1,115 @@
+@baseUrl = https://sap-server:50000/b1s/v1
+@session = replace-with-B1SESSION-cookie
+
+# =============================================================================
+# UDT: @JCA_DLC_PAY — Reglas por condición de pago
+# ESTADO: PREPARACIÓN PRO — No implementada en MVP.
+# La aplicación NO valida ni lee esta UDT en MVP.
+# NO ejecutar durante instalación MVP.
+# Documentación: PRD sección 12.2 / Roadmap PRO sección 20
+# =============================================================================
+
+
+### PASO 1 — Crear tabla JCA_DLC_PAY (solo al activar versión PRO)
+POST {{baseUrl}}/UserTablesMD
+Cookie: B1SESSION={{session}}
+Content-Type: application/json
+
+{
+  "TableName": "JCA_DLC_PAY",
+  "TableDescription": "Smart Doc Control - Reglas por condicion de pago [PRO]",
+  "TableType": "bott_MasterData"
+}
+
+
+# =============================================================================
+# PASO 2 — Crear campos (referencia futura, ejecutar solo en versión PRO)
+# =============================================================================
+
+### Campo U_Active — Activa
+POST {{baseUrl}}/UserFieldsMD
+Cookie: B1SESSION={{session}}
+Content-Type: application/json
+
+{
+  "TableName": "@JCA_DLC_PAY",
+  "Name": "Active",
+  "Description": "Activa (Y/N)",
+  "Type": "db_Alpha",
+  "Size": 1
+}
+
+### Campo U_ObjType — Tipo objeto SAP
+POST {{baseUrl}}/UserFieldsMD
+Cookie: B1SESSION={{session}}
+Content-Type: application/json
+
+{
+  "TableName": "@JCA_DLC_PAY",
+  "Name": "ObjType",
+  "Description": "Tipo objeto SAP",
+  "Type": "db_Alpha",
+  "Size": 20
+}
+
+### Campo U_GroupNum — Codigo condicion de pago SAP B1
+POST {{baseUrl}}/UserFieldsMD
+Cookie: B1SESSION={{session}}
+Content-Type: application/json
+
+{
+  "TableName": "@JCA_DLC_PAY",
+  "Name": "GroupNum",
+  "Description": "Codigo condicion de pago SAP B1",
+  "Type": "db_Numeric"
+}
+
+### Campo U_PymntGroup — Nombre condicion de pago
+POST {{baseUrl}}/UserFieldsMD
+Cookie: B1SESSION={{session}}
+Content-Type: application/json
+
+{
+  "TableName": "@JCA_DLC_PAY",
+  "Name": "PymntGroup",
+  "Description": "Nombre condicion de pago",
+  "Type": "db_Alpha",
+  "Size": 100
+}
+
+### Campo U_GraceDays — Dias de holgura para esta condicion
+POST {{baseUrl}}/UserFieldsMD
+Cookie: B1SESSION={{session}}
+Content-Type: application/json
+
+{
+  "TableName": "@JCA_DLC_PAY",
+  "Name": "GraceDays",
+  "Description": "Dias de holgura para esta condicion",
+  "Type": "db_Numeric"
+}
+
+### Campo U_BaseDate — Fecha base de calculo
+POST {{baseUrl}}/UserFieldsMD
+Cookie: B1SESSION={{session}}
+Content-Type: application/json
+
+{
+  "TableName": "@JCA_DLC_PAY",
+  "Name": "BaseDate",
+  "Description": "Fecha base: DocDate/TaxDate/DocDueDate/UpdateDate",
+  "Type": "db_Alpha",
+  "Size": 20
+}
+
+### Campo U_Priority — Prioridad sobre regla general
+POST {{baseUrl}}/UserFieldsMD
+Cookie: B1SESSION={{session}}
+Content-Type: application/json
+
+{
+  "TableName": "@JCA_DLC_PAY",
+  "Name": "Priority",
+  "Description": "Prioridad sobre regla general",
+  "Type": "db_Numeric"
+}

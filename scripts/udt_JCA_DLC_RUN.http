@@ -1,0 +1,164 @@
+@baseUrl = https://sap-server:50000/b1s/v1
+@session = replace-with-B1SESSION-cookie
+
+# =============================================================================
+# UDT: @JCA_DLC_RUN — Resumen de ejecución por corrida
+# MVP: CRÍTICA. La aplicación abortará si esta UDT no existe en SAP B1.
+# Creación: Ejecutar los requests en orden como usuario B1 Admin.
+# Documentación: PRD sección 12.5
+# NOTA: El Code de cada registro es el RunId (UUID generado por la app).
+#       Un registro con U_Status = RUNNING indica ejecución activa.
+#       El LockManager revisa esta tabla al arrancar para prevenir doble ejecución.
+# =============================================================================
+
+
+### PASO 1 — Crear tabla JCA_DLC_RUN
+POST {{baseUrl}}/UserTablesMD
+Cookie: B1SESSION={{session}}
+Content-Type: application/json
+
+{
+  "TableName": "JCA_DLC_RUN",
+  "TableDescription": "Smart Doc Control - Resumen de ejecucion",
+  "TableType": "bott_MasterData"
+}
+
+
+# =============================================================================
+# PASO 2 — Crear campos (ejecutar cada request por separado)
+# =============================================================================
+
+### Campo U_StartedAt — Fecha y hora de inicio
+POST {{baseUrl}}/UserFieldsMD
+Cookie: B1SESSION={{session}}
+Content-Type: application/json
+
+{
+  "TableName": "@JCA_DLC_RUN",
+  "Name": "StartedAt",
+  "Description": "Fecha y hora de inicio",
+  "Type": "db_Date"
+}
+
+### Campo U_FinishedAt — Fecha y hora de fin
+POST {{baseUrl}}/UserFieldsMD
+Cookie: B1SESSION={{session}}
+Content-Type: application/json
+
+{
+  "TableName": "@JCA_DLC_RUN",
+  "Name": "FinishedAt",
+  "Description": "Fecha y hora de fin",
+  "Type": "db_Date"
+}
+
+### Campo U_Status — Estado de la ejecucion
+POST {{baseUrl}}/UserFieldsMD
+Cookie: B1SESSION={{session}}
+Content-Type: application/json
+
+{
+  "TableName": "@JCA_DLC_RUN",
+  "Name": "Status",
+  "Description": "Estado: RUNNING/FINISHED/ERROR/STALE",
+  "Type": "db_Alpha",
+  "Size": 20
+}
+
+### Campo U_CompanyDB — Sociedad SAP B1
+POST {{baseUrl}}/UserFieldsMD
+Cookie: B1SESSION={{session}}
+Content-Type: application/json
+
+{
+  "TableName": "@JCA_DLC_RUN",
+  "Name": "CompanyDB",
+  "Description": "Sociedad SAP B1",
+  "Type": "db_Alpha",
+  "Size": 50
+}
+
+### Campo U_Env — Ambiente DEV/TST/PRD
+POST {{baseUrl}}/UserFieldsMD
+Cookie: B1SESSION={{session}}
+Content-Type: application/json
+
+{
+  "TableName": "@JCA_DLC_RUN",
+  "Name": "Env",
+  "Description": "Ambiente: DEV/TST/PRD",
+  "Type": "db_Alpha",
+  "Size": 10
+}
+
+### Campo U_TotalCandidates — Total documentos candidatos evaluados
+POST {{baseUrl}}/UserFieldsMD
+Cookie: B1SESSION={{session}}
+Content-Type: application/json
+
+{
+  "TableName": "@JCA_DLC_RUN",
+  "Name": "TotalCandidates",
+  "Description": "Total documentos candidatos evaluados",
+  "Type": "db_Numeric"
+}
+
+### Campo U_TotalClosed — Total documentos cerrados correctamente
+POST {{baseUrl}}/UserFieldsMD
+Cookie: B1SESSION={{session}}
+Content-Type: application/json
+
+{
+  "TableName": "@JCA_DLC_RUN",
+  "Name": "TotalClosed",
+  "Description": "Total documentos cerrados correctamente",
+  "Type": "db_Numeric"
+}
+
+### Campo U_TotalSimulated — Total documentos simulados
+POST {{baseUrl}}/UserFieldsMD
+Cookie: B1SESSION={{session}}
+Content-Type: application/json
+
+{
+  "TableName": "@JCA_DLC_RUN",
+  "Name": "TotalSimulated",
+  "Description": "Total documentos simulados (no cerrados)",
+  "Type": "db_Numeric"
+}
+
+### Campo U_TotalSkipped — Total documentos omitidos por regla
+POST {{baseUrl}}/UserFieldsMD
+Cookie: B1SESSION={{session}}
+Content-Type: application/json
+
+{
+  "TableName": "@JCA_DLC_RUN",
+  "Name": "TotalSkipped",
+  "Description": "Total documentos omitidos por regla",
+  "Type": "db_Numeric"
+}
+
+### Campo U_TotalErrors — Total documentos con error tecnico
+POST {{baseUrl}}/UserFieldsMD
+Cookie: B1SESSION={{session}}
+Content-Type: application/json
+
+{
+  "TableName": "@JCA_DLC_RUN",
+  "Name": "TotalErrors",
+  "Description": "Total documentos con error tecnico",
+  "Type": "db_Numeric"
+}
+
+### Campo U_DurationSec — Duracion total en segundos
+POST {{baseUrl}}/UserFieldsMD
+Cookie: B1SESSION={{session}}
+Content-Type: application/json
+
+{
+  "TableName": "@JCA_DLC_RUN",
+  "Name": "DurationSec",
+  "Description": "Duracion total de la ejecucion en segundos",
+  "Type": "db_Numeric"
+}
