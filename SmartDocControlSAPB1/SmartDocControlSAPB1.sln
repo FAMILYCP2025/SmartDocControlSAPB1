@@ -1,0 +1,57 @@
+
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.8.34525.116
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{CF02D226-1862-4B19-BDCA-9206FE707EE9}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{DDFBA9E5-C4B7-47FF-AB88-E1E28180C842}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SmartDocControl.Domain", "src\SmartDocControl.Domain\SmartDocControl.Domain.csproj", "{32157EC2-1AC9-414C-8E9B-2531D480B530}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SmartDocControl.Application", "src\SmartDocControl.Application\SmartDocControl.Application.csproj", "{B5B21D62-DB39-4521-8901-9BAD63D78710}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SmartDocControl.Infrastructure", "src\SmartDocControl.Infrastructure\SmartDocControl.Infrastructure.csproj", "{6D4B5BCF-41FD-40FC-965B-B8351D0CBDBF}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SmartDocControl.Runner", "src\SmartDocControl.Runner\SmartDocControl.Runner.csproj", "{C243911D-1BC8-4724-B7DC-98EF9FD5D910}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SmartDocControl.Tests", "tests\SmartDocControl.Tests\SmartDocControl.Tests.csproj", "{2D2C87B2-7171-4972-BB53-A111D14DB6FC}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{32157EC2-1AC9-414C-8E9B-2531D480B530}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{32157EC2-1AC9-414C-8E9B-2531D480B530}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{32157EC2-1AC9-414C-8E9B-2531D480B530}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{32157EC2-1AC9-414C-8E9B-2531D480B530}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B5B21D62-DB39-4521-8901-9BAD63D78710}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B5B21D62-DB39-4521-8901-9BAD63D78710}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B5B21D62-DB39-4521-8901-9BAD63D78710}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B5B21D62-DB39-4521-8901-9BAD63D78710}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6D4B5BCF-41FD-40FC-965B-B8351D0CBDBF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6D4B5BCF-41FD-40FC-965B-B8351D0CBDBF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6D4B5BCF-41FD-40FC-965B-B8351D0CBDBF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6D4B5BCF-41FD-40FC-965B-B8351D0CBDBF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C243911D-1BC8-4724-B7DC-98EF9FD5D910}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C243911D-1BC8-4724-B7DC-98EF9FD5D910}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C243911D-1BC8-4724-B7DC-98EF9FD5D910}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C243911D-1BC8-4724-B7DC-98EF9FD5D910}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2D2C87B2-7171-4972-BB53-A111D14DB6FC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2D2C87B2-7171-4972-BB53-A111D14DB6FC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2D2C87B2-7171-4972-BB53-A111D14DB6FC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2D2C87B2-7171-4972-BB53-A111D14DB6FC}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{32157EC2-1AC9-414C-8E9B-2531D480B530} = {CF02D226-1862-4B19-BDCA-9206FE707EE9}
+		{B5B21D62-DB39-4521-8901-9BAD63D78710} = {CF02D226-1862-4B19-BDCA-9206FE707EE9}
+		{6D4B5BCF-41FD-40FC-965B-B8351D0CBDBF} = {CF02D226-1862-4B19-BDCA-9206FE707EE9}
+		{C243911D-1BC8-4724-B7DC-98EF9FD5D910} = {CF02D226-1862-4B19-BDCA-9206FE707EE9}
+		{2D2C87B2-7171-4972-BB53-A111D14DB6FC} = {DDFBA9E5-C4B7-47FF-AB88-E1E28180C842}
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
