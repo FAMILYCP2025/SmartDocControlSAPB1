@@ -191,9 +191,29 @@ Este parámetro no está implementado en el MVP.
 
 ---
 
+## D11 — Contratos de infraestructura en Application/Ports
+
+**Contexto:** Durante el diseño del Commit 02 surgió la pregunta de si las interfaces de repositorio (`IDocumentRepository`, `IConfigurationRepository`, `ILogRepository`) debían vivir en `Domain/Interfaces/` o en `Application/Ports/`.
+
+**Decisión:** Todos los contratos hacia infraestructura residen en `Application/Ports/`. `Domain/` queda reservado exclusivamente para entidades, enums, value objects y reglas puras de dominio. No depende de contratos de acceso a datos ni de integración.
+
+**Contratos en `Application/Ports/`:**
+- `IDocumentRepository` — acceso a documentos SAP vía Service Layer
+- `IConfigurationRepository` — lectura de reglas desde `@JCA_DLC_RULE` y `@JCA_DLC_EXC`
+- `ILogRepository` — escritura en `@JCA_DLC_LOG` con fallback a PendingFunctionalLog
+- `IServiceLayerClient` — cliente HTTP de bajo nivel hacia SAP Service Layer
+- `ILockManager` — mecanismo dual de lock (archivo local + registro `@JCA_DLC_RUN`)
+
+**Motivo:** SAP Service Layer, UDTs, logs funcionales y lock son infraestructura o persistencia. Colocar sus contratos en Domain crearía dependencias hacia arriba incompatibles con Clean Architecture.
+
+**Impacto en carpetas:** `Domain/Interfaces/` eliminada. `Application/Ports/` es la ubicación oficial de todos los contratos. `Infrastructure/` contendrá las implementaciones concretas.
+
+---
+
 ## Control de cambios
 
 | Versión | Fecha | Descripción |
 |---------|-------|-------------|
 | 1.0 | 2026-05-04 | Versión inicial — 9 decisiones aprobadas previo al desarrollo MVP |
 | 1.1 | 2026-05-04 | D10 agregado: PRD arranca en simulación por defecto |
+| 1.2 | 2026-05-05 | D11 agregado: contratos de infraestructura en Application/Ports |
