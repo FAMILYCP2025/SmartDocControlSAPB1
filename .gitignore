@@ -79,6 +79,9 @@ appsettings.secrets.json
 SmartDocControl.lock
 C:\SmartDocControl\
 
+## Claude Code
+.claude/
+
 ## JetBrains Rider
 .idea/
 *.sln.iml
