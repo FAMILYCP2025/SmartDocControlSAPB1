@@ -10,6 +10,8 @@
     <Optimize Condition="'$(Configuration)'=='Release'">true</Optimize>
     <!-- Self-contained para despliegue en servidor SAP sin SDK instalado -->
     <SelfContained>false</SelfContained>
+    <!-- Avoids Windows file-lock on rebuild in Debug. Release keeps .exe for Task Scheduler. -->
+    <UseAppHost Condition="'$(Configuration)'=='Debug'">false</UseAppHost>
   </PropertyGroup>
 
   <ItemGroup>
