@@ -55,7 +55,8 @@ public sealed class StartupValidatorTests : IDisposable
     {
         Environment = env,
         DefaultSimulation = defaultSimulation,
-        MaxRetries = 3
+        MaxRetries = 3,
+        RetryDelaySeconds = 0
     };
 
     private LoggingOptions ValidLoggingOptions() => new()
@@ -70,7 +71,7 @@ public sealed class StartupValidatorTests : IDisposable
     {
         var handler = new StubHttpMessageHandler(responder);
         var http = new HttpClient(handler) { BaseAddress = new Uri(sap.BaseUrl) };
-        var slClient = new ServiceLayerClient(http, sap);
+        var slClient = new ServiceLayerClient(http, sap, exec);
         return new StartupValidator(sap, exec, log, slClient);
     }
 
@@ -414,7 +415,7 @@ public sealed class StartupValidatorTests : IDisposable
 
         var handler = new StubHttpMessageHandler(req => Status(HttpStatusCode.OK));
         var http = new HttpClient(handler) { BaseAddress = new Uri(sap.BaseUrl) };
-        var slClient = new ServiceLayerClient(http, sap);
+        var slClient = new ServiceLayerClient(http, sap, exec);
         var validator = new StartupValidator(sap, exec, log, slClient);
 
         var report = await validator.ValidateAsync();

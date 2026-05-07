@@ -18,11 +18,18 @@ public sealed class ServiceLayerClientTests
         PasswordEnvironmentVariable = pwdEnvVar
     };
 
+    private static ExecutionOptions FastExec() => new()
+    {
+        Environment = "TST",
+        MaxRetries = 0,
+        RetryDelaySeconds = 0
+    };
+
     [Fact]
     public void Constructor_NullBaseAddress_ThrowsArgumentException()
     {
         var http = new HttpClient();
-        var act = () => new ServiceLayerClient(http, DefaultSapOptions());
+        var act = () => new ServiceLayerClient(http, DefaultSapOptions(), FastExec());
 
         act.Should().Throw<ArgumentException>().WithMessage("*BaseAddress*");
     }
@@ -32,7 +39,7 @@ public sealed class ServiceLayerClientTests
     {
         var http = new HttpClient { BaseAddress = new Uri("https://sap-test:50000/b1s/v1") };
 
-        _ = new ServiceLayerClient(http, DefaultSapOptions());
+        _ = new ServiceLayerClient(http, DefaultSapOptions(), FastExec());
 
         http.BaseAddress!.AbsoluteUri.Should().Be("https://sap-test:50000/b1s/v1/");
     }
@@ -42,7 +49,7 @@ public sealed class ServiceLayerClientTests
     {
         var http = new HttpClient { BaseAddress = new Uri("https://sap-test:50000/b1s/v1/") };
 
-        _ = new ServiceLayerClient(http, DefaultSapOptions());
+        _ = new ServiceLayerClient(http, DefaultSapOptions(), FastExec());
 
         http.BaseAddress!.AbsoluteUri.Should().Be("https://sap-test:50000/b1s/v1/");
     }
@@ -52,7 +59,7 @@ public sealed class ServiceLayerClientTests
     {
         var handler = new StubHttpMessageHandler(_ => new HttpResponseMessage(HttpStatusCode.OK));
         var http = new HttpClient(handler) { BaseAddress = new Uri("https://sap-test:50000/b1s/v1/") };
-        var client = new ServiceLayerClient(http, DefaultSapOptions());
+        var client = new ServiceLayerClient(http, DefaultSapOptions(), FastExec());
 
         var act = async () => await client.GetExistingUserTablesAsync(new[] { "JCA_DLC_RULE" });
 
@@ -88,7 +95,7 @@ public sealed class ServiceLayerClientTests
                 return new HttpResponseMessage(HttpStatusCode.NotFound);
             });
             var http = new HttpClient(handler) { BaseAddress = new Uri("https://sap-test:50000/b1s/v1/") };
-            var client = new ServiceLayerClient(http, DefaultSapOptions(pwdVar));
+            var client = new ServiceLayerClient(http, DefaultSapOptions(pwdVar), FastExec());
 
             await client.LoginAsync();
             var result = await client.GetExistingUserTablesAsync(new[] { "JCA_DLC_RULE", "JCA_DLC_EXC" });
@@ -127,7 +134,7 @@ public sealed class ServiceLayerClientTests
                 };
             });
             var http = new HttpClient(handler) { BaseAddress = new Uri("https://sap-test:50000/b1s/v1/") };
-            var client = new ServiceLayerClient(http, DefaultSapOptions(pwdVar));
+            var client = new ServiceLayerClient(http, DefaultSapOptions(pwdVar), FastExec());
 
             await client.LoginAsync();
             var requestsBeforeQuery = handler.Requests.Count;

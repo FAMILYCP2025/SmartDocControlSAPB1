@@ -32,11 +32,44 @@ public sealed class FileLogger
     public Task ErrorAsync(string message, Exception? ex = null) => AppendAsync("ERR", message, ex);
     public Task DebugAsync(string message) => _debugMode ? AppendAsync("DBG", message) : Task.CompletedTask;
 
-    private void Append(string level, string message, Exception? ex = null) =>
-        File.AppendAllText(_logFilePath, Serialize(level, message, ex));
+    private void Append(string level, string message, Exception? ex = null)
+    {
+        try
+        {
+            File.AppendAllText(_logFilePath, Serialize(level, message, ex));
+        }
+        catch (Exception ioEx)
+        {
+            TryWriteToConsoleFallback(level, message, ex, ioEx);
+        }
+    }
 
-    private async Task AppendAsync(string level, string message, Exception? ex = null) =>
-        await File.AppendAllTextAsync(_logFilePath, Serialize(level, message, ex));
+    private async Task AppendAsync(string level, string message, Exception? ex = null)
+    {
+        try
+        {
+            await File.AppendAllTextAsync(_logFilePath, Serialize(level, message, ex));
+        }
+        catch (Exception ioEx)
+        {
+            TryWriteToConsoleFallback(level, message, ex, ioEx);
+        }
+    }
+
+    private void TryWriteToConsoleFallback(string level, string message, Exception? originalEx, Exception fileEx)
+    {
+        try
+        {
+            var fallback = $"[{DateTime.UtcNow:o}] [{level}] [cid={_correlationId}] [LOGFILE_FAILED:{fileEx.GetType().Name}] {message}";
+            if (originalEx is not null)
+                fallback += $" | EX: {originalEx.Message}";
+            Console.Error.WriteLine(fallback);
+        }
+        catch
+        {
+            // Final swallow: logging must never break the process flow.
+        }
+    }
 
     private string Serialize(string level, string message, Exception? ex)
     {
