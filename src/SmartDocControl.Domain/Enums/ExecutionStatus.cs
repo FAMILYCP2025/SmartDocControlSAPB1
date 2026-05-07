@@ -4,6 +4,7 @@ public enum ExecutionStatus
 {
     Pending,
     Processed,
+    Simulated,
     Skipped,
     Error
 }
