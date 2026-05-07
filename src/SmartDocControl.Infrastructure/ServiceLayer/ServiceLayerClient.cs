@@ -22,6 +22,15 @@ public sealed class ServiceLayerClient
     {
         ArgumentNullException.ThrowIfNull(httpClient);
         ArgumentNullException.ThrowIfNull(options);
+
+        if (httpClient.BaseAddress is null)
+            throw new ArgumentException(
+                "HttpClient.BaseAddress must be configured before constructing ServiceLayerClient.",
+                nameof(httpClient));
+
+        if (!httpClient.BaseAddress.AbsoluteUri.EndsWith("/"))
+            httpClient.BaseAddress = new Uri(httpClient.BaseAddress.AbsoluteUri + "/");
+
         _httpClient = httpClient;
         _options = options;
     }
@@ -81,6 +90,36 @@ public sealed class ServiceLayerClient
         var json = await response.Content.ReadAsStringAsync(cancellationToken);
         return JsonSerializer.Deserialize<T>(json, JsonOptions)
             ?? throw new InvalidOperationException($"Failed to deserialize response from '{relativeUrl}'.");
+    }
+
+    public async Task<IReadOnlySet<string>> GetExistingUserTablesAsync(
+        IEnumerable<string> tableNames,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(tableNames);
+        if (_session is null)
+            throw new InvalidOperationException("No active SAP session. Call LoginAsync first.");
+
+        var names = tableNames
+            .Where(n => !string.IsNullOrWhiteSpace(n))
+            .Select(n => n.Trim())
+            .ToList();
+
+        if (names.Count == 0)
+            return new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+        var filterExpression = string.Join(" or ", names.Select(n => $"TableName eq '{n}'"));
+        var url = $"UserTablesMD?$filter={Uri.EscapeDataString(filterExpression)}&$select=TableName";
+
+        var result = await GetAsync<SapPagedResult<SapUserTableDto>>(url, cancellationToken);
+
+        var existing = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        foreach (var dto in result.Value)
+        {
+            if (!string.IsNullOrWhiteSpace(dto.TableName))
+                existing.Add(dto.TableName);
+        }
+        return existing;
     }
 
     private HttpRequestMessage CreateAuthenticatedRequest(HttpMethod method, string relativeUrl)

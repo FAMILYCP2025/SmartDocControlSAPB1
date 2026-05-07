@@ -12,6 +12,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\src\SmartDocControl.Domain\SmartDocControl.Domain.csproj" />
     <ProjectReference Include="..\..\src\SmartDocControl.Application\SmartDocControl.Application.csproj" />
+    <ProjectReference Include="..\..\src\SmartDocControl.Infrastructure\SmartDocControl.Infrastructure.csproj" />
   </ItemGroup>
 
   <ItemGroup>
