@@ -13,6 +13,7 @@
     <ProjectReference Include="..\..\src\SmartDocControl.Domain\SmartDocControl.Domain.csproj" />
     <ProjectReference Include="..\..\src\SmartDocControl.Application\SmartDocControl.Application.csproj" />
     <ProjectReference Include="..\..\src\SmartDocControl.Infrastructure\SmartDocControl.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\src\SmartDocControl.Runner\SmartDocControl.Runner.csproj" />
   </ItemGroup>
 
   <ItemGroup>
