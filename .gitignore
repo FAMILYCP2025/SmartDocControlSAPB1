@@ -75,6 +75,11 @@ publish/
 secrets.json
 appsettings.secrets.json
 
+## Configuración de entornos reales (contienen IP, CompanyDB, usuario real)
+## Usar los archivos .example.json como plantilla y crear localmente
+src/SmartDocControl.Runner/appsettings.TST.json
+src/SmartDocControl.Runner/appsettings.PRD.json
+
 ## Archivos de lock y logs de la aplicación en runtime
 SmartDocControl.lock
 C:\SmartDocControl\
