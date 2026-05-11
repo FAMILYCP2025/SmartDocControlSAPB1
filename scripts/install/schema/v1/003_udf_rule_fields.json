@@ -1,0 +1,58 @@
+{
+  "type": "UserFields",
+  "operation": "CreateIfNotExists",
+  "tableName": "JCA_DLC_RULE",
+  "fields": [
+    {
+      "name": "Active",
+      "fieldDescription": "Rule is active",
+      "type": "db_Alpha",
+      "size": 1,
+      "defaultValue": "Y",
+      "validValues": [
+        { "value": "Y", "description": "Yes" },
+        { "value": "N", "description": "No" }
+      ]
+    },
+    {
+      "name": "ObjType",
+      "fieldDescription": "SAP object type (e.g. 17, 22, 23, 540000006)",
+      "type": "db_Alpha",
+      "size": 20,
+      "mandatory": true
+    },
+    {
+      "name": "EntitySet",
+      "fieldDescription": "Service Layer EntitySet name (e.g. Quotations, Orders)",
+      "type": "db_Alpha",
+      "size": 50,
+      "mandatory": true
+    },
+    {
+      "name": "GraceDays",
+      "fieldDescription": "Grace period in days before a document is eligible for close",
+      "type": "db_Numeric",
+      "size": 6,
+      "defaultValue": "30",
+      "mandatory": true
+    },
+    {
+      "name": "Simulation",
+      "fieldDescription": "Rule executes in simulation mode only — no real document closure",
+      "type": "db_Alpha",
+      "size": 1,
+      "defaultValue": "Y",
+      "validValues": [
+        { "value": "Y", "description": "Yes" },
+        { "value": "N", "description": "No" }
+      ]
+    },
+    {
+      "name": "MaxDocumentsPerRun",
+      "fieldDescription": "Maximum documents to process per execution (0 = unlimited)",
+      "type": "db_Numeric",
+      "size": 6,
+      "defaultValue": "100"
+    }
+  ]
+}

@@ -14,6 +14,7 @@
     <ProjectReference Include="..\..\src\SmartDocControl.Application\SmartDocControl.Application.csproj" />
     <ProjectReference Include="..\..\src\SmartDocControl.Infrastructure\SmartDocControl.Infrastructure.csproj" />
     <ProjectReference Include="..\..\src\SmartDocControl.Runner\SmartDocControl.Runner.csproj" />
+    <ProjectReference Include="..\..\src\SmartDocControl.Schema\SmartDocControl.Schema.csproj" />
   </ItemGroup>
 
   <ItemGroup>

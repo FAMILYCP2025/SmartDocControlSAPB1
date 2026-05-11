@@ -1,0 +1,10 @@
+{
+  "schemaVersion": "1.0.0",
+  "appVersionMinimum": "0.2.0",
+  "description": "Smart Document Control — initial schema foundation",
+  "steps": [
+    "001_udt_schema_version.json",
+    "002_udt_rule.json",
+    "003_udf_rule_fields.json"
+  ]
+}
