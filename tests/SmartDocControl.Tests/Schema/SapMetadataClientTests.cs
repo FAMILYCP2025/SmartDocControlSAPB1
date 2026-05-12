@@ -236,11 +236,12 @@ public sealed class SapMetadataClientTests
         handler.Requests[0].RequestUri!.ToString().Should().EndWith("UserFieldsMD");
         capturedBody.Should().Contain("\"TableName\":\"JCA_DLC_RULE\"");
         capturedBody.Should().Contain("\"Name\":\"Active\"");
-        capturedBody.Should().Contain("\"FieldType\":\"db_Alpha\"");
+        capturedBody.Should().Contain("\"Type\":\"db_Alpha\"");
         capturedBody.Should().Contain("\"EditSize\":1");
         capturedBody.Should().Contain("\"Mandatory\":\"tYES\"");
         capturedBody.Should().Contain("\"DefaultValue\":\"Y\"");
         capturedBody.Should().Contain("\"ValidValuesMD\"");
+        capturedBody.Should().NotContain("\"FieldType\"");
     }
 
     [Fact]

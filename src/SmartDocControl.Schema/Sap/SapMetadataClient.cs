@@ -1,6 +1,7 @@
 using System.Net;
 using System.Text;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using SmartDocControl.Schema.Descriptors;
 using SmartDocControl.Schema.Sap.Dtos;
 
@@ -12,7 +13,8 @@ internal sealed class SapMetadataClient : ISapMetadataProvider, ISchemaExecutor
 
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
-        PropertyNameCaseInsensitive = true
+        PropertyNameCaseInsensitive = true,
+        DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
     };
 
     private readonly HttpClient _httpClient;
@@ -103,7 +105,7 @@ internal sealed class SapMetadataClient : ISapMetadataProvider, ISchemaExecutor
             TableName = udf.TableName,
             Name = udf.Name, // SAP adds the "U_" prefix on its side
             Description = udf.FieldDescription,
-            FieldType = udf.Type,
+            Type = udf.Type,
             EditSize = udf.Size,
             Mandatory = udf.Mandatory == true ? "tYES" : null,
             DefaultValue = udf.DefaultValue

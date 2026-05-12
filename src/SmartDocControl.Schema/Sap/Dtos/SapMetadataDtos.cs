@@ -14,7 +14,7 @@ internal sealed class SapUserFieldPayload
     [JsonPropertyName("TableName")] public string TableName { get; set; } = string.Empty;
     [JsonPropertyName("Name")] public string Name { get; set; } = string.Empty;
     [JsonPropertyName("Description")] public string Description { get; set; } = string.Empty;
-    [JsonPropertyName("FieldType")] public string FieldType { get; set; } = string.Empty;
+    [JsonPropertyName("Type")] public string Type { get; set; } = string.Empty;
     [JsonPropertyName("EditSize")] public int? EditSize { get; set; }
     [JsonPropertyName("Mandatory")] public string? Mandatory { get; set; }
     [JsonPropertyName("DefaultValue")] public string? DefaultValue { get; set; }
