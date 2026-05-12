@@ -141,6 +141,85 @@ public sealed class SchemaInstaller
         return new SchemaApplyResult(results, wasAborted, abortReason);
     }
 
+    /// <summary>
+    /// Re-queries SAP Service Layer for every entry that was actually written or
+    /// already existed (Created / AlreadyExists). Entries with other statuses
+    /// (Skipped, DryRun, Failed, Aborted) are not verified. A single short retry
+    /// tolerates the brief eventual-consistency window between a successful POST
+    /// and the metadata becoming visible on subsequent GETs.
+    /// </summary>
+    public async Task<PostValidationReport> VerifyAppliedAsync(
+        SchemaApplyResult applyResult,
+        ISapMetadataProvider metadata,
+        TimeSpan? retryDelay = null,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(applyResult);
+        ArgumentNullException.ThrowIfNull(metadata);
+
+        var delay = retryDelay ?? TimeSpan.FromMilliseconds(500);
+        var missing = new List<MissingObject>();
+        var verified = 0;
+
+        foreach (var entry in applyResult.Entries)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+
+            if (entry.Status != SchemaApplyStatus.Created &&
+                entry.Status != SchemaApplyStatus.AlreadyExists)
+                continue;
+
+            var found = await VerifyEntryWithRetryAsync(entry, metadata, delay, cancellationToken)
+                .ConfigureAwait(false);
+
+            if (found)
+            {
+                verified++;
+            }
+            else
+            {
+                missing.Add(new MissingObject
+                {
+                    ObjectType = entry.ObjectType,
+                    ObjectName = entry.ObjectName,
+                    Reason = $"SAP did not return metadata for {entry.ObjectType} '{entry.ObjectName}' after apply."
+                });
+            }
+        }
+
+        return new PostValidationReport(missing, verified);
+    }
+
+    private static async Task<bool> VerifyEntryWithRetryAsync(
+        SchemaApplyEntryResult entry,
+        ISapMetadataProvider metadata,
+        TimeSpan retryDelay,
+        CancellationToken cancellationToken)
+    {
+        for (var attempt = 0; attempt < 2; attempt++)
+        {
+            if (attempt > 0 && retryDelay > TimeSpan.Zero)
+                await Task.Delay(retryDelay, cancellationToken).ConfigureAwait(false);
+
+            bool found;
+            if (entry.ObjectType == InstallObjectType.UserTable)
+            {
+                var table = await metadata.GetTableAsync(entry.ObjectName).ConfigureAwait(false);
+                found = table is not null;
+            }
+            else
+            {
+                var (tableName, fieldName) = SplitFieldObjectName(entry.ObjectName);
+                var field = await metadata.GetFieldAsync(tableName, fieldName).ConfigureAwait(false);
+                found = field is not null;
+            }
+
+            if (found) return true;
+        }
+
+        return false;
+    }
+
     private static async Task<SchemaApplyEntryResult> ExecuteCreateAsync(
         InstallPlanEntry entry,
         LoadedSchema schema,

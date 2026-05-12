@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Net;
 using SmartDocControl.Application.Exceptions;
 using SmartDocControl.Infrastructure.Configuration;
@@ -10,10 +11,15 @@ using SmartDocControl.Schema.Sap;
 namespace SmartDocControl.Runner.Commands;
 
 /// <summary>
-/// Orchestrator for --install-schema. In this release only --dry-run is supported:
-/// it logs in to SAP, runs INSPECT + PLAN against real Service Layer metadata
-/// endpoints (GETs only), prints the resulting InstallPlan, and exits.
-/// Apply is NOT invoked. No POST is sent to UserTablesMD or UserFieldsMD.
+/// Orchestrator for --install-schema.
+/// Two supported modes:
+///   --install-schema --dry-run   → INSPECT + PLAN only (no POSTs, no writes).
+///   --install-schema --force     → INSPECT + PLAN, then real APPLY against SAP
+///                                  Service Layer (POST UserTablesMD / UserFieldsMD),
+///                                  followed by post-validation re-query.
+/// Plain --install-schema (without --dry-run and without --force) is rejected
+/// to avoid accidental real apply. Drift detected during planning aborts before
+/// any POST, regardless of --force.
 /// </summary>
 internal static class InstallSchemaCommand
 {
@@ -27,16 +33,18 @@ internal static class InstallSchemaCommand
         CliOptions opts,
         CancellationToken cancellationToken = default)
     {
-        // Guard 1: in this release, real APPLY is not implemented. --install-schema requires --dry-run.
-        if (!opts.DryRun)
+        // Mode gate: real apply requires --force; --dry-run is always allowed.
+        if (!opts.DryRun && !opts.Force)
         {
             Console.Error.WriteLine(
-                "[ERROR] --install-schema requires --dry-run in this release. Real APPLY is not yet implemented.");
-            logger?.Warning("Install-schema invoked without --dry-run; aborting.");
+                "[ERROR] --install-schema without --dry-run is a real apply against SAP and requires --force.");
+            Console.Error.WriteLine(
+                "        Use '--install-schema --dry-run' to preview, or add '--force' to authorize real apply.");
+            logger?.Warning("Install-schema invoked without --dry-run and without --force; aborting.");
             return ExitCodes.UsageError;
         }
 
-        // Guard 2: install credential must be set in a separate env var from the runtime credential.
+        // Guard: install credential must be set in a separate env var from the runtime credential.
         var installPassword = Environment.GetEnvironmentVariable(InstallPasswordEnvVar);
         if (string.IsNullOrWhiteSpace(installPassword))
         {
@@ -48,7 +56,7 @@ internal static class InstallSchemaCommand
             return ExitCodes.FatalConfig;
         }
 
-        // Guard 3: descriptors folder must exist (copied next to the runner binary).
+        // Guard: descriptors folder must exist (copied next to the runner binary).
         var schemaDir = Path.Combine(AppContext.BaseDirectory, SchemaSubfolder);
         if (!Directory.Exists(schemaDir))
         {
@@ -57,20 +65,15 @@ internal static class InstallSchemaCommand
             return ExitCodes.FatalConfig;
         }
 
-        Console.WriteLine($"Running schema installer (dry-run) — descriptors: {schemaDir}");
+        var mode = opts.DryRun ? "dry-run" : "REAL APPLY";
+        Console.WriteLine($"Running schema installer ({mode}) — descriptors: {schemaDir}");
         Console.WriteLine();
 
         // Load + validate descriptors before touching SAP.
         LoadedSchema loaded;
         try
         {
-            var loader = new DescriptorLoader();
-            loaded = loader.Load(schemaDir);
-
-            var validator = new DescriptorValidator();
-            validator.Validate(loaded.Manifest);
-            foreach (var udt in loaded.UserTables) validator.Validate(udt);
-            foreach (var udf in loaded.UserFields) validator.Validate(udf);
+            loaded = LoadAndValidateDescriptors(schemaDir);
         }
         catch (DescriptorValidationException ex)
         {
@@ -89,8 +92,8 @@ internal static class InstallSchemaCommand
         Console.WriteLine($"Descriptors    : {loaded.UserTables.Count} UDT(s), {loaded.UserFields.Count} UDF(s)");
         Console.WriteLine();
 
-        // Build HttpClient with CookieContainer so the session captured during Login
-        // is available to subsequent GETs from SapMetadataClient.
+        // HttpClient with CookieContainer so the session captured during Login
+        // is available to subsequent GETs/POSTs through SapMetadataClient.
         var cookieContainer = new CookieContainer();
         var httpHandler = new HttpClientHandler
         {
@@ -107,8 +110,6 @@ internal static class InstallSchemaCommand
             Timeout = TimeSpan.FromSeconds(config.Sap.TimeoutSeconds)
         };
 
-        // Clone SapOptions to point the installer login at SAP_INSTALL_PASSWORD
-        // instead of the runtime SAP_AUTOCLOSE_PASSWORD.
         var installSapOptions = new SapOptions
         {
             BaseUrl = config.Sap.BaseUrl,
@@ -124,12 +125,14 @@ internal static class InstallSchemaCommand
             CorrelationId = runId
         };
 
-        // Defensive: pass only the READ interface to the installer. Write methods
-        // (ISchemaExecutor) are unreachable through this variable.
-        ISapMetadataProvider metadataProvider = new SapMetadataClient(httpClient);
+        // SapMetadataClient implements both ISapMetadataProvider (read) and
+        // ISchemaExecutor (write). We keep the read interface for dry-run; only
+        // the apply branch unwraps the write interface.
+        var sapClient = new SapMetadataClient(httpClient);
+        ISapMetadataProvider metadataProvider = sapClient;
+
         var installer = new SchemaInstaller();
 
-        InstallPlan plan;
         try
         {
             Console.WriteLine("Logging in to SAP Service Layer...");
@@ -138,9 +141,23 @@ internal static class InstallSchemaCommand
 
             Console.WriteLine("Inspecting SAP metadata and building install plan...");
             Console.WriteLine();
-            plan = await installer.PlanAsync(loaded, metadataProvider);
+            var plan = await installer.PlanAsync(loaded, metadataProvider);
             logger?.Information(
                 $"Install plan built: creates={plan.TotalCreates}, skips={plan.TotalSkips}, drifts={plan.TotalDrifts}.");
+
+            ConsoleOutputFormatter.PrintInstallPlan(plan, dryRun: opts.DryRun);
+
+            // Drift blocks the apply unconditionally; --force does NOT override drift.
+            if (plan.HasBlockingIssues)
+            {
+                logger?.Warning("Plan has blocking drift(s); apply aborted before any POST.");
+                return ExitCodes.SchemaDriftDetected;
+            }
+
+            if (opts.DryRun)
+                return ExitCodes.Success;
+
+            return await RunRealApplyAsync(installer, plan, loaded, sapClient, metadataProvider, logger, cancellationToken);
         }
         catch (SapAuthenticationException ex)
         {
@@ -162,16 +179,88 @@ internal static class InstallSchemaCommand
         }
         finally
         {
-            // Best-effort logout. Failure here is non-fatal.
             try { await slClient.LogoutAsync(cancellationToken); }
             catch (Exception ex) { logger?.Warning($"Logout failed: {ex.Message}"); }
         }
+    }
 
-        ConsoleOutputFormatter.PrintInstallPlan(plan, dryRun: true);
+    private static async Task<int> RunRealApplyAsync(
+        SchemaInstaller installer,
+        InstallPlan plan,
+        LoadedSchema loaded,
+        SapMetadataClient sapClient,
+        ISapMetadataProvider metadataProvider,
+        FileLogger? logger,
+        CancellationToken cancellationToken)
+    {
+        Console.WriteLine();
+        Console.WriteLine("APPLYING SCHEMA CHANGES TO SAP");
+        Console.WriteLine("==============================");
+        Console.WriteLine();
 
-        if (plan.HasBlockingIssues)
-            return ExitCodes.SchemaDriftDetected;
+        ISchemaExecutor executor = sapClient;
 
+        var applyOptions = new ApplyOptions
+        {
+            DryRun = false,
+            TreatAlreadyExistsAsSuccess = true,
+            ContinueOnError = false,
+            OnEvent = e =>
+            {
+                Console.WriteLine($"  {e}");
+                logger?.Information($"[apply] {e}");
+            }
+        };
+
+        var stopwatch = Stopwatch.StartNew();
+        SchemaApplyResult applyResult;
+        try
+        {
+            applyResult = await installer.ApplyAsync(plan, loaded, executor, applyOptions, cancellationToken);
+        }
+        finally
+        {
+            stopwatch.Stop();
+        }
+
+        ConsoleOutputFormatter.PrintApplyResult(applyResult, stopwatch.Elapsed);
+
+        if (!applyResult.IsSuccessful)
+        {
+            logger?.Warning(
+                $"Schema apply finished with failures: failed={applyResult.TotalFailed}, aborted={applyResult.TotalAborted}.");
+            return ExitCodes.SchemaInstallFailed;
+        }
+
+        Console.WriteLine();
+        Console.WriteLine("POST-VALIDATION");
+        Console.WriteLine("===============");
+
+        var report = await installer.VerifyAppliedAsync(
+            applyResult, metadataProvider, cancellationToken: cancellationToken);
+
+        ConsoleOutputFormatter.PrintPostValidationReport(report);
+
+        if (!report.IsValid)
+        {
+            logger?.Warning(
+                $"Post-validation failed: {report.Missing.Count} object(s) missing in SAP after apply.");
+            return ExitCodes.SchemaInstallFailed;
+        }
+
+        logger?.Information($"Schema apply succeeded. Verified {report.VerifiedCount} object(s).");
         return ExitCodes.Success;
+    }
+
+    private static LoadedSchema LoadAndValidateDescriptors(string schemaDir)
+    {
+        var loader = new DescriptorLoader();
+        var loaded = loader.Load(schemaDir);
+
+        var validator = new DescriptorValidator();
+        validator.Validate(loaded.Manifest);
+        foreach (var udt in loaded.UserTables) validator.Validate(udt);
+        foreach (var udf in loaded.UserFields) validator.Validate(udf);
+        return loaded;
     }
 }

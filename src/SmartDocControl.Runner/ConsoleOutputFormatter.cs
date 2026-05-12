@@ -24,12 +24,13 @@ internal static class ConsoleOutputFormatter
         Console.WriteLine();
         Console.WriteLine("Modes (choose one):");
         Console.WriteLine("  --validate-only          Validate configuration and SAP connectivity, then exit.");
-        Console.WriteLine("  --install-schema         Run the schema installer. Requires --dry-run in this release.");
+        Console.WriteLine("  --install-schema         Run the schema installer. Combine with --dry-run or --force.");
         Console.WriteLine();
         Console.WriteLine("Modifiers:");
         Console.WriteLine("  --dry-run                With --install-schema: read-only INSPECT + PLAN, no SAP writes.");
         Console.WriteLine("                           Standalone: alias for --validate-only (backward compat).");
-        Console.WriteLine("  --force                  With --install-schema: re-evaluate even if version is registered.");
+        Console.WriteLine("  --force                  With --install-schema (without --dry-run): authorize real apply");
+        Console.WriteLine("                           against SAP Service Layer (POST UserTablesMD / UserFieldsMD).");
         Console.WriteLine("  --help, -h               Show this help.");
     }
 
@@ -123,6 +124,96 @@ internal static class ConsoleOutputFormatter
             Console.WriteLine("[DRY-RUN] No changes applied to SAP.");
             Console.ForegroundColor = saved;
         }
+    }
+
+    public static void PrintApplyResult(SchemaApplyResult result, TimeSpan elapsed)
+    {
+        var saved = Console.ForegroundColor;
+
+        Console.WriteLine();
+        Console.WriteLine("APPLY RESULT");
+        Console.WriteLine("============");
+
+        if (result.Entries.Count == 0)
+            Console.WriteLine("  (no entries)");
+
+        foreach (var entry in result.Entries)
+        {
+            var (tag, color) = entry.Status switch
+            {
+                SchemaApplyStatus.Created       => ("[CREATED]       ", ConsoleColor.Green),
+                SchemaApplyStatus.AlreadyExists => ("[ALREADY-EXISTS]", ConsoleColor.DarkYellow),
+                SchemaApplyStatus.Skipped       => ("[SKIPPED]       ", ConsoleColor.DarkGray),
+                SchemaApplyStatus.DryRun        => ("[DRY-RUN]       ", ConsoleColor.Yellow),
+                SchemaApplyStatus.Failed        => ("[FAILED]        ", ConsoleColor.Red),
+                SchemaApplyStatus.Aborted       => ("[ABORTED]       ", ConsoleColor.Red),
+                _                               => ("[?]             ", saved)
+            };
+
+            Console.ForegroundColor = color;
+            var typeLabel = entry.ObjectType == InstallObjectType.UserTable ? "UserTable" : "UserField";
+            Console.WriteLine($"  {tag} {typeLabel,-10}  {entry.ObjectName}");
+            Console.ForegroundColor = saved;
+
+            if (!string.IsNullOrEmpty(entry.Message))
+                Console.WriteLine($"                   {entry.Message}");
+        }
+
+        Console.WriteLine();
+        Console.WriteLine("SUMMARY");
+        Console.WriteLine("=======");
+        Console.WriteLine($"  Created         : {result.TotalCreated}");
+        Console.WriteLine($"  Already existed : {result.TotalAlreadyExisted}");
+        Console.WriteLine($"  Skipped         : {result.TotalSkipped}");
+        Console.WriteLine($"  Failed          : {result.TotalFailed}");
+        Console.WriteLine($"  Aborted         : {result.TotalAborted}");
+        Console.WriteLine($"  Elapsed         : {elapsed.TotalSeconds:F2}s");
+        Console.WriteLine();
+
+        if (result.IsSuccessful)
+        {
+            Console.ForegroundColor = ConsoleColor.Green;
+            Console.WriteLine("[OK] Apply finished successfully.");
+        }
+        else if (result.WasAborted)
+        {
+            Console.ForegroundColor = ConsoleColor.Red;
+            Console.WriteLine($"[ABORT] {result.AbortReason ?? "Apply was aborted."}");
+        }
+        else
+        {
+            Console.ForegroundColor = ConsoleColor.Red;
+            Console.WriteLine("[FAIL] Apply completed with failures.");
+        }
+        Console.ForegroundColor = saved;
+    }
+
+    public static void PrintPostValidationReport(PostValidationReport report)
+    {
+        var saved = Console.ForegroundColor;
+
+        if (report.IsValid)
+        {
+            Console.ForegroundColor = ConsoleColor.Green;
+            Console.WriteLine($"  [OK] All {report.VerifiedCount} object(s) verified present in SAP.");
+            Console.ForegroundColor = saved;
+            return;
+        }
+
+        Console.ForegroundColor = ConsoleColor.Red;
+        Console.WriteLine($"  [FAIL] Verified {report.VerifiedCount} object(s); {report.Missing.Count} missing:");
+        foreach (var item in report.Missing)
+        {
+            var typeLabel = item.ObjectType == InstallObjectType.UserTable ? "UserTable" : "UserField";
+            Console.WriteLine($"    - {typeLabel}: {item.ObjectName}");
+            if (!string.IsNullOrEmpty(item.Reason))
+            {
+                Console.ForegroundColor = saved;
+                Console.WriteLine($"        {item.Reason}");
+                Console.ForegroundColor = ConsoleColor.Red;
+            }
+        }
+        Console.ForegroundColor = saved;
     }
 
     internal static string GetBaseUrlDisplay(string baseUrl)

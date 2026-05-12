@@ -21,7 +21,8 @@ public sealed class CliOptionsInstallSchemaTests
     public void Parse_InstallSchemaWithoutDryRun_StillParses_DryRunIsFalse()
     {
         // Parser is pure: it accepts --install-schema alone. The command layer
-        // enforces the dry-run requirement.
+        // enforces that real apply requires --force; this is just the parser
+        // contract.
         var result = CliParseResult.Parse(["--environment", "TST", "--install-schema"]);
 
         result.IsSuccess.Should().BeTrue();
