@@ -29,6 +29,15 @@ public sealed class DescriptorValidatorTests
     }
 
     [Fact]
+    public void Validate_UdtTableNameExceedsMaxLength_Throws()
+    {
+        var udt = ValidUdt() with { TableName = "JCA_DLC_TABLE_NAME_TOO_LONG_123" };
+        var act = () => _validator.Validate(udt);
+        act.Should().Throw<DescriptorValidationException>()
+            .WithMessage("*exceeds*maximum length*20*");
+    }
+
+    [Fact]
     public void Validate_UdtEmptyTableDescription_Throws()
     {
         var udt = ValidUdt() with { TableDescription = "" };

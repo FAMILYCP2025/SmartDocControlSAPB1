@@ -91,7 +91,7 @@ public sealed class SchemaInstallerApplyTests
         var schema = BuildSchema(
             udts:
             [
-                Udt("JCA_DLC_SCHEMA_VERSION", "noObject"),
+                Udt("JCA_DLC_SCHEMA", "noObject"),
                 Udt("JCA_DLC_RULE", "noObject"),
                 Udt("JCA_DLC_EXC", "noObject")
             ]);
@@ -101,8 +101,8 @@ public sealed class SchemaInstallerApplyTests
         var result = await _installer.ApplyAsync(plan, schema, executor);
 
         result.Entries.Select(e => e.ObjectName)
-            .Should().Equal("JCA_DLC_SCHEMA_VERSION", "JCA_DLC_RULE", "JCA_DLC_EXC");
-        executor.CreatedTables.Should().Equal("JCA_DLC_SCHEMA_VERSION", "JCA_DLC_RULE", "JCA_DLC_EXC");
+            .Should().Equal("JCA_DLC_SCHEMA", "JCA_DLC_RULE", "JCA_DLC_EXC");
+        executor.CreatedTables.Should().Equal("JCA_DLC_SCHEMA", "JCA_DLC_RULE", "JCA_DLC_EXC");
     }
 
     [Fact]

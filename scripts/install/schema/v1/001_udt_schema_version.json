@@ -1,7 +1,7 @@
 {
   "type": "UserTable",
   "operation": "CreateIfNotExists",
-  "tableName": "JCA_DLC_SCHEMA_VERSION",
+  "tableName": "JCA_DLC_SCHEMA",
   "tableDescription": "Smart Document Control schema version registry",
   "tableType": "noObject"
 }
