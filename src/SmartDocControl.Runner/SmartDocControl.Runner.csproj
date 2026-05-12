@@ -17,6 +17,14 @@
   <ItemGroup>
     <ProjectReference Include="..\SmartDocControl.Application\SmartDocControl.Application.csproj" />
     <ProjectReference Include="..\SmartDocControl.Infrastructure\SmartDocControl.Infrastructure.csproj" />
+    <ProjectReference Include="..\SmartDocControl.Schema\SmartDocControl.Schema.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Schema descriptors: copy to output so InstallSchemaCommand can find them via AppContext.BaseDirectory. -->
+    <None Include="..\..\scripts\install\schema\v1\*.json"
+          Link="schema\v1\%(Filename)%(Extension)"
+          CopyToOutputDirectory="Always" />
   </ItemGroup>
 
   <ItemGroup>

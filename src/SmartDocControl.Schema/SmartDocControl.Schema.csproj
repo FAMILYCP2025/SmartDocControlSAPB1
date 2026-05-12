@@ -12,6 +12,9 @@
     <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleToAttribute">
       <_Parameter1>SmartDocControl.Tests</_Parameter1>
     </AssemblyAttribute>
+    <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleToAttribute">
+      <_Parameter1>SmartDocControl.Runner</_Parameter1>
+    </AssemblyAttribute>
   </ItemGroup>
 
 </Project>

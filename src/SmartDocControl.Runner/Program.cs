@@ -1,6 +1,7 @@
 using SmartDocControl.Infrastructure.Logging;
 using SmartDocControl.Infrastructure.ServiceLayer;
 using SmartDocControl.Infrastructure.Validation;
+using SmartDocControl.Runner.Commands;
 
 namespace SmartDocControl.Runner;
 
@@ -50,7 +51,12 @@ internal static class Program
 
         var baseUrlDisplay = ConsoleOutputFormatter.GetBaseUrlDisplay(appConfig.Sap.BaseUrl);
         ConsoleOutputFormatter.PrintBanner(runId, opts.Environment, baseUrlDisplay);
-        logger?.Information($"Runner started. Environment={opts.Environment}, ValidateOnly={opts.ValidateOnly}");
+        logger?.Information(
+            $"Runner started. Environment={opts.Environment}, " +
+            $"ValidateOnly={opts.ValidateOnly}, InstallSchema={opts.InstallSchema}, DryRun={opts.DryRun}");
+
+        if (opts.InstallSchema)
+            return await InstallSchemaCommand.RunAsync(appConfig, runId, logger, opts);
 
         if (opts.ValidateOnly)
             return await RunValidateOnlyAsync(appConfig, runId, logger);
