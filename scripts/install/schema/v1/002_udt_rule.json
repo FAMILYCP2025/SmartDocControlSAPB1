@@ -2,6 +2,6 @@
   "type": "UserTable",
   "operation": "CreateIfNotExists",
   "tableName": "JCA_DLC_RULE",
-  "tableDescription": "Smart Document Control document close rules",
+  "tableDescription": "SDC close rules",
   "tableType": "noObject"
 }

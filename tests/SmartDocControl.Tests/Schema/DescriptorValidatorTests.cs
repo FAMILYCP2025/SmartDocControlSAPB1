@@ -38,6 +38,23 @@ public sealed class DescriptorValidatorTests
     }
 
     [Fact]
+    public void Validate_UdtTableDescriptionAtMaxLength_DoesNotThrow()
+    {
+        var udt = ValidUdt() with { TableDescription = new string('A', 30) };
+        var act = () => _validator.Validate(udt);
+        act.Should().NotThrow();
+    }
+
+    [Fact]
+    public void Validate_UdtTableDescriptionExceedsMaxLength_Throws()
+    {
+        var udt = ValidUdt() with { TableDescription = new string('A', 31) };
+        var act = () => _validator.Validate(udt);
+        act.Should().Throw<DescriptorValidationException>()
+            .WithMessage("*exceeds*maximum length*30*");
+    }
+
+    [Fact]
     public void Validate_UdtEmptyTableDescription_Throws()
     {
         var udt = ValidUdt() with { TableDescription = "" };

@@ -25,6 +25,7 @@ public sealed class DescriptorValidator
     };
 
     private const int MaxTableNameLength = 20;
+    private const int MaxTableDescriptionLength = 30;
 
     public void Validate(UdtDescriptor udt)
     {
@@ -39,6 +40,10 @@ public sealed class DescriptorValidator
 
         if (string.IsNullOrWhiteSpace(udt.TableDescription))
             throw new DescriptorValidationException(name, "TableDescription is required.");
+
+        if (udt.TableDescription.Length > MaxTableDescriptionLength)
+            throw new DescriptorValidationException(name,
+                $"TableDescription '{udt.TableDescription}' exceeds the SAP B1 maximum length of {MaxTableDescriptionLength} characters ({udt.TableDescription.Length}).");
 
         if (string.IsNullOrWhiteSpace(udt.Operation))
             throw new DescriptorValidationException(name, "Operation is required.");
