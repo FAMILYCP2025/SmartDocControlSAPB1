@@ -7,6 +7,7 @@ internal sealed class CliOptions
     public bool InstallSchema { get; init; }
     public bool DryRun { get; init; }
     public bool Force { get; init; }
+    public bool TraceMetadata { get; init; }
     public bool ShowHelp { get; init; }
 }
 
@@ -23,6 +24,7 @@ internal sealed class CliParseResult
         bool installSchema = false;
         bool dryRun = false;
         bool force = false;
+        bool traceMetadata = false;
         bool showHelp = false;
 
         for (int i = 0; i < args.Length; i++)
@@ -50,6 +52,10 @@ internal sealed class CliParseResult
                     force = true;
                     break;
 
+                case "--trace-metadata":
+                    traceMetadata = true;
+                    break;
+
                 case "--environment":
                 case "-e":
                     if (i + 1 >= args.Length || args[i + 1].StartsWith('-'))
@@ -72,6 +78,7 @@ internal sealed class CliParseResult
                     InstallSchema = installSchema,
                     DryRun = dryRun,
                     Force = force,
+                    TraceMetadata = traceMetadata,
                     ShowHelp = true
                 }
             };
@@ -95,7 +102,8 @@ internal sealed class CliParseResult
                 ValidateOnly = validateOnly,
                 InstallSchema = installSchema,
                 DryRun = dryRun,
-                Force = force
+                Force = force,
+                TraceMetadata = traceMetadata
             }
         };
     }

@@ -97,4 +97,15 @@ public sealed class CliOptionsInstallSchemaTests
         result.IsSuccess.Should().BeFalse();
         result.Error.Should().Contain("--apply-now");
     }
+
+    [Fact]
+    public void Parse_TraceMetadata_SetsFlag()
+    {
+        var result = CliParseResult.Parse(
+            ["--environment", "TST", "--install-schema", "--force", "--trace-metadata"]);
+
+        result.IsSuccess.Should().BeTrue();
+        result.Options!.TraceMetadata.Should().BeTrue();
+        result.Options.InstallSchema.Should().BeTrue();
+    }
 }

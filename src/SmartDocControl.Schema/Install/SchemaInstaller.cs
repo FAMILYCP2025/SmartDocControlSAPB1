@@ -66,6 +66,8 @@ public sealed class SchemaInstaller
         // Tracks UDTs freshly created in this apply run so we can detect when
         // subsequent UDFs need a propagation wait before their POST.
         var createdTables = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        // Ensures the session refresh (if configured) fires exactly once, before the first UDF POST.
+        var sessionRefreshDone = false;
 
         foreach (var entry in plan.Entries)
         {
@@ -107,6 +109,19 @@ public sealed class SchemaInstaller
                             Message    = "Dry-run: no changes applied."
                         });
                         break;
+                    }
+
+                    // One-time session refresh before the first UDF POST so SAP rebuilds
+                    // its internal metadata cache (handles the -2004 "Table not found"
+                    // failure that occurs when UDTs are pre-existing from a prior run).
+                    if (!sessionRefreshDone &&
+                        entry.ObjectType == InstallObjectType.UserField &&
+                        options.SessionRefresher is { } refresher)
+                    {
+                        options.OnEvent?.Invoke("Refreshing SAP metadata session before first UDF create.");
+                        await refresher.RefreshAsync(cancellationToken).ConfigureAwait(false);
+                        options.OnEvent?.Invoke("SAP metadata session refreshed.");
+                        sessionRefreshDone = true;
                     }
 
                     var outcome = await ExecuteCreateAsync(entry, schema, executor, options, createdTables, cancellationToken)

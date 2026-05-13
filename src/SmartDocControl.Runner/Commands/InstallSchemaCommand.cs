@@ -104,7 +104,19 @@ internal static class InstallSchemaCommand
             httpHandler.ServerCertificateCustomValidationCallback =
                 HttpClientHandler.DangerousAcceptAnyServerCertificateValidator;
 
-        using var httpClient = new HttpClient(httpHandler)
+        HttpMessageHandler outerHandler = httpHandler;
+        if (opts.TraceMetadata)
+        {
+            var tracer = new MetadataTraceHandler(msg =>
+            {
+                Console.WriteLine(msg);
+                logger?.Information(msg);
+            });
+            tracer.InnerHandler = httpHandler;
+            outerHandler = tracer;
+        }
+
+        using var httpClient = new HttpClient(outerHandler)
         {
             BaseAddress = new Uri(config.Sap.BaseUrl),
             Timeout = TimeSpan.FromSeconds(config.Sap.TimeoutSeconds)
@@ -157,7 +169,7 @@ internal static class InstallSchemaCommand
             if (opts.DryRun)
                 return ExitCodes.Success;
 
-            return await RunRealApplyAsync(installer, plan, loaded, sapClient, metadataProvider, logger, cancellationToken);
+            return await RunRealApplyAsync(installer, plan, loaded, sapClient, metadataProvider, slClient, logger, cancellationToken);
         }
         catch (SapAuthenticationException ex)
         {
@@ -190,6 +202,7 @@ internal static class InstallSchemaCommand
         LoadedSchema loaded,
         SapMetadataClient sapClient,
         ISapMetadataProvider metadataProvider,
+        ServiceLayerClient slClient,
         FileLogger? logger,
         CancellationToken cancellationToken)
     {
@@ -205,6 +218,7 @@ internal static class InstallSchemaCommand
             DryRun = false,
             TreatAlreadyExistsAsSuccess = true,
             ContinueOnError = false,
+            SessionRefresher = new ServiceLayerSessionRefresher(slClient),
             OnEvent = e =>
             {
                 Console.WriteLine($"  {e}");

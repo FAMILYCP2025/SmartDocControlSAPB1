@@ -31,6 +31,8 @@ internal static class ConsoleOutputFormatter
         Console.WriteLine("                           Standalone: alias for --validate-only (backward compat).");
         Console.WriteLine("  --force                  With --install-schema (without --dry-run): authorize real apply");
         Console.WriteLine("                           against SAP Service Layer (POST UserTablesMD / UserFieldsMD).");
+        Console.WriteLine("  --trace-metadata         Log each SAP Service Layer HTTP request (method, URI, body).");
+        Console.WriteLine("                           Sensitive headers (Cookie, Authorization) are omitted.");
         Console.WriteLine("  --help, -h               Show this help.");
     }
 
