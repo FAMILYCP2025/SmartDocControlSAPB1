@@ -63,6 +63,9 @@ public sealed class SchemaInstaller
         var results = new List<SchemaApplyEntryResult>(plan.Entries.Count);
         var abortRemaining = false;
         string? abortReason = null;
+        // Tracks UDTs freshly created in this apply run so we can detect when
+        // subsequent UDFs need a propagation wait before their POST.
+        var createdTables = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
         foreach (var entry in plan.Entries)
         {
@@ -106,9 +109,15 @@ public sealed class SchemaInstaller
                         break;
                     }
 
-                    var outcome = await ExecuteCreateAsync(entry, schema, executor, options, cancellationToken)
+                    var outcome = await ExecuteCreateAsync(entry, schema, executor, options, createdTables, cancellationToken)
                         .ConfigureAwait(false);
                     results.Add(outcome);
+
+                    if (outcome.Status == SchemaApplyStatus.Created &&
+                        entry.ObjectType == InstallObjectType.UserTable)
+                    {
+                        createdTables.Add(entry.ObjectName);
+                    }
 
                     if (outcome.Status == SchemaApplyStatus.Failed && !options.ContinueOnError)
                     {
@@ -225,6 +234,7 @@ public sealed class SchemaInstaller
         LoadedSchema schema,
         ISchemaExecutor executor,
         ApplyOptions options,
+        IReadOnlySet<string> createdTables,
         CancellationToken cancellationToken)
     {
         try
@@ -243,6 +253,17 @@ public sealed class SchemaInstaller
             else
             {
                 var (tableName, fieldName) = SplitFieldObjectName(entry.ObjectName);
+
+                // SAP B1 metadata layer has eventual consistency: a UDT created moments
+                // ago may not yet be visible when we try to POST the first UDF on it.
+                // If this table was freshly created in this apply run AND the executor
+                // also supports reads, poll until the table is available.
+                if (createdTables.Contains(tableName) && executor is ISapMetadataProvider propagationReader)
+                {
+                    await WaitForTablePropagationAsync(tableName, propagationReader, options, cancellationToken)
+                        .ConfigureAwait(false);
+                }
+
                 var udf = schema.UserFields.FirstOrDefault(f =>
                     string.Equals(f.TableName, tableName, StringComparison.OrdinalIgnoreCase)
                     && string.Equals(f.Name, fieldName, StringComparison.OrdinalIgnoreCase))
@@ -289,6 +310,39 @@ public sealed class SchemaInstaller
                 Message    = ex.Message,
                 ErrorCode  = (ex as SapMetadataException)?.ErrorCode
             };
+        }
+    }
+
+    private static async Task WaitForTablePropagationAsync(
+        string tableName,
+        ISapMetadataProvider metadata,
+        ApplyOptions options,
+        CancellationToken cancellationToken)
+    {
+        options.OnEvent?.Invoke($"Waiting for SAP metadata propagation for table '{tableName}'...");
+
+        var deadline = DateTimeOffset.UtcNow + options.MetadataPropagationTimeout;
+        var retries = 0;
+
+        while (true)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+
+            var table = await metadata.GetTableAsync(tableName).ConfigureAwait(false);
+            if (table is not null)
+            {
+                options.OnEvent?.Invoke(
+                    $"SAP metadata available for table '{tableName}' after {retries} retries.");
+                return;
+            }
+
+            retries++;
+
+            if (DateTimeOffset.UtcNow >= deadline)
+                throw new SapMetadataException(tableName, 0, "-2004",
+                    $"SAP metadata propagation timeout for table '{tableName}'.");
+
+            await Task.Delay(options.MetadataPropagationPollInterval, cancellationToken).ConfigureAwait(false);
         }
     }
 
