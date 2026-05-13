@@ -95,12 +95,17 @@ public sealed class SapMetadataClientTests
         result.Type.Should().Be("db_Alpha");
         result.Size.Should().Be(1);
 
-        handler.Requests[0].RequestUri!.ToString().Should().Contain("U_Active");
+        var decodedUri = Uri.UnescapeDataString(handler.Requests[0].RequestUri!.ToString());
+        decodedUri.Should().Contain("Name eq 'Active'");
+        decodedUri.Should().NotContain("Name eq 'U_Active'");
     }
 
     [Fact]
-    public async Task GetFieldAsync_AcceptsAlreadyPrefixedName()
+    public async Task GetFieldAsync_AcceptsAlreadyPrefixedName_StripsForFilter()
     {
+        // Callers may pass the physical CUFD name ("U_Active"); the filter must
+        // still use the alias form ("Active") — SAP Service Layer does not accept
+        // the "U_" prefix in UserFieldsMD Name filters.
         var handler = new StubHttpMessageHandler(_ =>
             new HttpResponseMessage(HttpStatusCode.OK)
             {
@@ -111,9 +116,10 @@ public sealed class SapMetadataClientTests
 
         await client.GetFieldAsync("JCA_DLC_RULE", "U_Active");
 
-        var uri = handler.Requests[0].RequestUri!.ToString();
-        uri.Should().Contain("U_Active");
-        uri.Should().NotContain("U_U_Active");
+        var decodedUri = Uri.UnescapeDataString(handler.Requests[0].RequestUri!.ToString());
+        decodedUri.Should().Contain("Name eq 'Active'");
+        decodedUri.Should().NotContain("Name eq 'U_Active'");
+        decodedUri.Should().NotContain("U_U_Active");
     }
 
     // ─── CreateUserTableAsync ─────────────────────────────────────────────────
@@ -340,6 +346,44 @@ public sealed class SapMetadataClientTests
         var decodedUri = Uri.UnescapeDataString(handler.Requests[0].RequestUri!.ToString());
         decodedUri.Should().Contain("TableName eq '@JCA_DLC_RULE'");
         decodedUri.Should().NotContain("TableName eq 'JCA_DLC_RULE'");
+        decodedUri.Should().Contain("Name eq 'Active'");
+        decodedUri.Should().NotContain("Name eq 'U_Active'");
+    }
+
+    [Fact]
+    public async Task GetFieldAsync_WhenCalledWithUPrefixedFieldName_StripsPrefixForServiceLayerFilter()
+    {
+        var handler = new StubHttpMessageHandler(_ =>
+            new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new StringContent("""{ "value": [] }""")
+            });
+        using var http = new HttpClient(handler) { BaseAddress = BaseUri };
+        var client = new SapMetadataClient(http);
+
+        await client.GetFieldAsync("JCA_DLC_RULE", "U_Active");
+
+        var decodedUri = Uri.UnescapeDataString(handler.Requests[0].RequestUri!.ToString());
+        decodedUri.Should().Contain("Name eq 'Active'");
+        decodedUri.Should().NotContain("U_Active");
+    }
+
+    [Fact]
+    public async Task GetFieldAsync_WhenCalledWithAliasName_UsesAliasAsIs()
+    {
+        var handler = new StubHttpMessageHandler(_ =>
+            new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new StringContent("""{ "value": [] }""")
+            });
+        using var http = new HttpClient(handler) { BaseAddress = BaseUri };
+        var client = new SapMetadataClient(http);
+
+        await client.GetFieldAsync("JCA_DLC_RULE", "Active");
+
+        var decodedUri = Uri.UnescapeDataString(handler.Requests[0].RequestUri!.ToString());
+        decodedUri.Should().Contain("Name eq 'Active'");
+        decodedUri.Should().NotContain("U_Active");
     }
 
     [Fact]

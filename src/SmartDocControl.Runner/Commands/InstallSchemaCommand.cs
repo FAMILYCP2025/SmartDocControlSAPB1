@@ -107,11 +107,13 @@ internal static class InstallSchemaCommand
         HttpMessageHandler outerHandler = httpHandler;
         if (opts.TraceMetadata)
         {
-            var tracer = new MetadataTraceHandler(msg =>
-            {
-                Console.WriteLine(msg);
-                logger?.Information(msg);
-            });
+            var tracer = new MetadataTraceHandler(
+                onTrace: msg =>
+                {
+                    Console.WriteLine(msg);
+                    logger?.Information(msg);
+                },
+                cookieContainer: cookieContainer);
             tracer.InnerHandler = httpHandler;
             outerHandler = tracer;
         }

@@ -55,16 +55,14 @@ internal sealed class SapMetadataClient : ISapMetadataProvider, ISchemaExecutor
         ArgumentException.ThrowIfNullOrEmpty(tableName);
         ArgumentException.ThrowIfNullOrEmpty(fieldName);
 
-        var prefixed = fieldName.StartsWith("U_", StringComparison.OrdinalIgnoreCase)
-            ? fieldName
-            : $"U_{fieldName}";
+        var aliasName = NormalizeUserFieldAliasName(fieldName);
 
-        var path = $"UserFieldsMD?$filter=TableName eq '{Escape(NormalizeUserFieldTableName(tableName))}' and Name eq '{Escape(prefixed)}'";
+        var path = $"UserFieldsMD?$filter=TableName eq '{Escape(NormalizeUserFieldTableName(tableName))}' and Name eq '{Escape(aliasName)}'";
         using var response = await _httpClient.GetAsync(path).ConfigureAwait(false);
         if (response.StatusCode == HttpStatusCode.NotFound)
             return null;
 
-        await EnsureSuccessOrThrowAsync(response, $"{tableName}.{prefixed}").ConfigureAwait(false);
+        await EnsureSuccessOrThrowAsync(response, $"{tableName}.{aliasName}").ConfigureAwait(false);
 
         var body = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
         var parsed = JsonSerializer.Deserialize<SapFieldListResponse>(body, JsonOptions);
@@ -189,4 +187,15 @@ internal sealed class SapMetadataClient : ISapMetadataProvider, ISchemaExecutor
     /// </summary>
     private static string NormalizeUserFieldTableName(string tableName) =>
         tableName.StartsWith('@') ? tableName : $"@{tableName}";
+
+    /// <summary>
+    /// Service Layer UserFieldsMD identifies fields by their alias name — the
+    /// bare name without the "U_" prefix that SAP stores physically in CUFD
+    /// (e.g. "Active" not "U_Active"). Strips the prefix when present so that
+    /// callers using either form get the correct OData filter.
+    /// </summary>
+    private static string NormalizeUserFieldAliasName(string fieldName) =>
+        fieldName.StartsWith("U_", StringComparison.OrdinalIgnoreCase)
+            ? fieldName[2..]
+            : fieldName;
 }
