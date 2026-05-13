@@ -234,7 +234,7 @@ public sealed class SapMetadataClientTests
 
         handler.Requests.Should().ContainSingle();
         handler.Requests[0].RequestUri!.ToString().Should().EndWith("UserFieldsMD");
-        capturedBody.Should().Contain("\"TableName\":\"JCA_DLC_RULE\"");
+        capturedBody.Should().Contain("\"TableName\":\"@JCA_DLC_RULE\"");
         capturedBody.Should().Contain("\"Name\":\"Active\"");
         capturedBody.Should().Contain("\"Type\":\"db_Alpha\"");
         capturedBody.Should().Contain("\"EditSize\":1");
@@ -268,6 +268,102 @@ public sealed class SapMetadataClientTests
 
         var ex = (await act.Should().ThrowAsync<SapObjectAlreadyExistsException>()).Which;
         ex.ObjectName.Should().Be("JCA_DLC_RULE.U_Active");
+    }
+
+    // ─── UserFieldsMD TableName normalization (12F-FIX) ───────────────────────
+
+    [Fact]
+    public async Task CreateUserFieldAsync_PayloadHasAtPrefixedTableName()
+    {
+        string? capturedBody = null;
+        var handler = new StubHttpMessageHandler(req =>
+        {
+            capturedBody = req.Content!.ReadAsStringAsync().GetAwaiter().GetResult();
+            return new HttpResponseMessage(HttpStatusCode.Created);
+        });
+        using var http = new HttpClient(handler) { BaseAddress = BaseUri };
+        var client = new SapMetadataClient(http);
+
+        await client.CreateUserFieldAsync(new UdfDescriptor
+        {
+            TableName = "JCA_DLC_RULE",
+            Name = "Active",
+            FieldDescription = "x",
+            Type = "db_Alpha",
+            Size = 1
+        });
+
+        capturedBody.Should().Contain("\"TableName\":\"@JCA_DLC_RULE\"");
+        capturedBody.Should().NotContain("\"TableName\":\"JCA_DLC_RULE\"");
+    }
+
+    [Fact]
+    public async Task CreateUserFieldAsync_DescriptorAlreadyHasAtPrefix_NotDoubled()
+    {
+        string? capturedBody = null;
+        var handler = new StubHttpMessageHandler(req =>
+        {
+            capturedBody = req.Content!.ReadAsStringAsync().GetAwaiter().GetResult();
+            return new HttpResponseMessage(HttpStatusCode.Created);
+        });
+        using var http = new HttpClient(handler) { BaseAddress = BaseUri };
+        var client = new SapMetadataClient(http);
+
+        await client.CreateUserFieldAsync(new UdfDescriptor
+        {
+            TableName = "@JCA_DLC_RULE",
+            Name = "Active",
+            FieldDescription = "x",
+            Type = "db_Alpha",
+            Size = 1
+        });
+
+        capturedBody.Should().Contain("\"TableName\":\"@JCA_DLC_RULE\"");
+        capturedBody.Should().NotContain("@@JCA_DLC_RULE");
+    }
+
+    [Fact]
+    public async Task GetFieldAsync_FilterUsesAtPrefixedTableName()
+    {
+        var handler = new StubHttpMessageHandler(_ =>
+            new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new StringContent("""{ "value": [] }""")
+            });
+        using var http = new HttpClient(handler) { BaseAddress = BaseUri };
+        var client = new SapMetadataClient(http);
+
+        await client.GetFieldAsync("JCA_DLC_RULE", "Active");
+
+        // The URI may percent-encode '@' as '%40'; check the decoded form so
+        // the assertion is robust to .NET URI normalization.
+        var decodedUri = Uri.UnescapeDataString(handler.Requests[0].RequestUri!.ToString());
+        decodedUri.Should().Contain("TableName eq '@JCA_DLC_RULE'");
+        decodedUri.Should().NotContain("TableName eq 'JCA_DLC_RULE'");
+    }
+
+    [Fact]
+    public async Task CreateUserTableAsync_PayloadKeepsTableNameWithoutAtPrefix()
+    {
+        // UserTablesMD must NOT use the "@" prefix — only UserFieldsMD does.
+        string? capturedBody = null;
+        var handler = new StubHttpMessageHandler(req =>
+        {
+            capturedBody = req.Content!.ReadAsStringAsync().GetAwaiter().GetResult();
+            return new HttpResponseMessage(HttpStatusCode.Created);
+        });
+        using var http = new HttpClient(handler) { BaseAddress = BaseUri };
+        var client = new SapMetadataClient(http);
+
+        await client.CreateUserTableAsync(new UdtDescriptor
+        {
+            TableName = "JCA_DLC_RULE",
+            TableDescription = "Rules",
+            TableType = "bott_NoObject"
+        });
+
+        capturedBody.Should().Contain("\"TableName\":\"JCA_DLC_RULE\"");
+        capturedBody.Should().NotContain("\"TableName\":\"@JCA_DLC_RULE\"");
     }
 
     [Fact]

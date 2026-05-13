@@ -59,7 +59,7 @@ internal sealed class SapMetadataClient : ISapMetadataProvider, ISchemaExecutor
             ? fieldName
             : $"U_{fieldName}";
 
-        var path = $"UserFieldsMD?$filter=TableName eq '{Escape(tableName)}' and Name eq '{Escape(prefixed)}'";
+        var path = $"UserFieldsMD?$filter=TableName eq '{Escape(NormalizeUserFieldTableName(tableName))}' and Name eq '{Escape(prefixed)}'";
         using var response = await _httpClient.GetAsync(path).ConfigureAwait(false);
         if (response.StatusCode == HttpStatusCode.NotFound)
             return null;
@@ -102,7 +102,7 @@ internal sealed class SapMetadataClient : ISapMetadataProvider, ISchemaExecutor
 
         var payload = new SapUserFieldPayload
         {
-            TableName = udf.TableName,
+            TableName = NormalizeUserFieldTableName(udf.TableName),
             Name = udf.Name, // SAP adds the "U_" prefix on its side
             Description = udf.FieldDescription,
             Type = udf.Type,
@@ -180,4 +180,13 @@ internal sealed class SapMetadataClient : ISapMetadataProvider, ISchemaExecutor
     }
 
     private static string Escape(string value) => value.Replace("'", "''");
+
+    /// <summary>
+    /// UserFieldsMD identifies the parent UDT with the "@" prefix in both the
+    /// POST payload and the OData filter (e.g. "@JCA_DLC_RULE"), even though
+    /// UserTablesMD itself uses the bare name. This helper is idempotent: a
+    /// table name that already starts with "@" is returned unchanged.
+    /// </summary>
+    private static string NormalizeUserFieldTableName(string tableName) =>
+        tableName.StartsWith('@') ? tableName : $"@{tableName}";
 }
