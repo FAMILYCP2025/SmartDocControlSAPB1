@@ -252,8 +252,8 @@ internal static class InstallSchemaCommand
         Console.WriteLine("POST-VALIDATION");
         Console.WriteLine("===============");
 
-        var report = await installer.VerifyAppliedAsync(
-            applyResult, metadataProvider, cancellationToken: cancellationToken);
+        var report = await installer.VerifySchemaAsync(
+            loaded, metadataProvider, cancellationToken: cancellationToken);
 
         ConsoleOutputFormatter.PrintPostValidationReport(report);
 

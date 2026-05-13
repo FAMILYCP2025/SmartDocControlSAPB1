@@ -197,13 +197,13 @@ internal static class ConsoleOutputFormatter
         if (report.IsValid)
         {
             Console.ForegroundColor = ConsoleColor.Green;
-            Console.WriteLine($"  [OK] All {report.VerifiedCount} object(s) verified present in SAP.");
+            Console.WriteLine($"  [OK] All {report.RequiredCount} required object(s) verified present in SAP.");
             Console.ForegroundColor = saved;
             return;
         }
 
         Console.ForegroundColor = ConsoleColor.Red;
-        Console.WriteLine($"  [FAIL] Verified {report.VerifiedCount} object(s); {report.Missing.Count} missing:");
+        Console.WriteLine($"  [FAIL] Verified {report.VerifiedCount} of {report.RequiredCount} required object(s); {report.Missing.Count} missing:");
         foreach (var item in report.Missing)
         {
             var typeLabel = item.ObjectType == InstallObjectType.UserTable ? "UserTable" : "UserField";

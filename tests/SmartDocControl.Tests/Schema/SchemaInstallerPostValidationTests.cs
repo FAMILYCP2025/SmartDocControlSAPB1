@@ -1,5 +1,7 @@
 using FluentAssertions;
+using SmartDocControl.Schema.Descriptors;
 using SmartDocControl.Schema.Install;
+using SmartDocControl.Schema.Loader;
 using SmartDocControl.Schema.Sap;
 using Xunit;
 
@@ -182,6 +184,117 @@ public sealed class SchemaInstallerPostValidationTests
         var act = async () => await _installer.VerifyAppliedAsync(applyResult, null!);
         await act.Should().ThrowAsync<ArgumentNullException>();
     }
+
+    // ─── VerifySchemaAsync ────────────────────────────────────────────────────
+
+    [Fact]
+    public async Task VerifySchemaAsync_AllRequiredObjectsPresent_IsValid()
+    {
+        var schema = BuildSchema(
+            udts: [Udt("JCA_DLC_RULE"), Udt("JCA_DLC_EXC")],
+            udfs: [Udf("JCA_DLC_RULE", "Active"), Udf("JCA_DLC_RULE", "MaxDocs")]);
+
+        var metadata = new InMemorySapMetadata();
+        metadata.AddTable(new SapTableMetadata { TableName = "JCA_DLC_RULE", TableType = "bott_NoObject" });
+        metadata.AddTable(new SapTableMetadata { TableName = "JCA_DLC_EXC",  TableType = "bott_NoObject" });
+        metadata.AddField(new SapFieldMetadata { TableName = "JCA_DLC_RULE", FieldName = "Active", Type = "db_Alpha", Size = 1 });
+        metadata.AddField(new SapFieldMetadata { TableName = "JCA_DLC_RULE", FieldName = "MaxDocs", Type = "db_Alpha", Size = 10 });
+
+        var report = await _installer.VerifySchemaAsync(schema, metadata, TimeSpan.Zero);
+
+        report.IsValid.Should().BeTrue();
+        report.RequiredCount.Should().Be(4);
+        report.VerifiedCount.Should().Be(4);
+        report.Missing.Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task VerifySchemaAsync_MissingUdt_ReturnsMissing()
+    {
+        var schema = BuildSchema(
+            udts: [Udt("JCA_DLC_RULE"), Udt("JCA_DLC_EXC")],
+            udfs: []);
+
+        var metadata = new InMemorySapMetadata();
+        metadata.AddTable(new SapTableMetadata { TableName = "JCA_DLC_RULE", TableType = "bott_NoObject" });
+        // JCA_DLC_EXC intentionally absent.
+
+        var report = await _installer.VerifySchemaAsync(schema, metadata, TimeSpan.Zero);
+
+        report.IsValid.Should().BeFalse();
+        report.RequiredCount.Should().Be(2);
+        report.VerifiedCount.Should().Be(1);
+        report.Missing.Should().ContainSingle()
+            .Which.Should().Match<MissingObject>(m =>
+                m.ObjectType == InstallObjectType.UserTable &&
+                m.ObjectName == "JCA_DLC_EXC");
+    }
+
+    [Fact]
+    public async Task VerifySchemaAsync_MissingUdf_ReturnsMissing()
+    {
+        var schema = BuildSchema(
+            udts: [Udt("JCA_DLC_RULE")],
+            udfs: [Udf("JCA_DLC_RULE", "Active")]);
+
+        var metadata = new InMemorySapMetadata();
+        metadata.AddTable(new SapTableMetadata { TableName = "JCA_DLC_RULE", TableType = "bott_NoObject" });
+        // Field "Active" intentionally absent.
+
+        var report = await _installer.VerifySchemaAsync(schema, metadata, TimeSpan.Zero);
+
+        report.IsValid.Should().BeFalse();
+        report.RequiredCount.Should().Be(2);
+        report.VerifiedCount.Should().Be(1);
+        report.Missing.Should().ContainSingle()
+            .Which.Should().Match<MissingObject>(m =>
+                m.ObjectType == InstallObjectType.UserField &&
+                m.ObjectName == "JCA_DLC_RULE.U_Active");
+    }
+
+    [Fact]
+    public async Task VerifySchemaAsync_ValidatesSkippedObjectsToo()
+    {
+        // All objects are ALREADY in SAP, so a real apply would SKIP everything.
+        // VerifySchemaAsync must still query and confirm all required objects.
+        var schema = BuildSchema(
+            udts: [Udt("JCA_DLC_RULE")],
+            udfs: [Udf("JCA_DLC_RULE", "Active")]);
+
+        var metadata = new InMemorySapMetadata();
+        metadata.AddTable(new SapTableMetadata { TableName = "JCA_DLC_RULE", TableType = "bott_NoObject" });
+        metadata.AddField(new SapFieldMetadata { TableName = "JCA_DLC_RULE", FieldName = "Active", Type = "db_Alpha", Size = 1 });
+
+        // No ApplyResult involved — VerifySchemaAsync works from LoadedSchema alone.
+        var report = await _installer.VerifySchemaAsync(schema, metadata, TimeSpan.Zero);
+
+        report.IsValid.Should().BeTrue();
+        report.RequiredCount.Should().Be(2);
+        report.VerifiedCount.Should().Be(2);
+        report.Missing.Should().BeEmpty();
+    }
+
+    // ─── Helpers ─────────────────────────────────────────────────────────────
+
+    private static LoadedSchema BuildSchema(
+        UdtDescriptor[]? udts = null,
+        UdfDescriptor[]? udfs = null) =>
+        new(
+            new SchemaManifest { SchemaVersion = "1.0.0", Steps = Array.Empty<string>() },
+            (IReadOnlyList<UdtDescriptor>)(udts ?? []),
+            (IReadOnlyList<UdfDescriptor>)(udfs ?? []));
+
+    private static UdtDescriptor Udt(string name) => new()
+    {
+        Type = "UserTable", Operation = "CreateIfNotExists",
+        TableName = name, TableDescription = name, TableType = "bott_NoObject"
+    };
+
+    private static UdfDescriptor Udf(string table, string name) => new()
+    {
+        TableName = table, Name = name,
+        FieldDescription = name, Type = "db_Alpha", Size = 1
+    };
 
     // ─── Flaky stub for retry test ────────────────────────────────────────────
 

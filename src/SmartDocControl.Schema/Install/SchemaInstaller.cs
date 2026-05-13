@@ -214,6 +214,110 @@ public sealed class SchemaInstaller
         return new PostValidationReport(missing, verified);
     }
 
+    /// <summary>
+    /// Verifies that every object declared in <paramref name="schema"/> exists in
+    /// SAP Service Layer. Unlike <see cref="VerifyAppliedAsync"/>, this method
+    /// checks the full required schema regardless of what happened during apply,
+    /// so it correctly reports "All N required object(s) verified" even when
+    /// every entry was already present (SKIP) and the apply wrote nothing.
+    /// </summary>
+    public async Task<PostValidationReport> VerifySchemaAsync(
+        LoadedSchema schema,
+        ISapMetadataProvider metadata,
+        TimeSpan? retryDelay = null,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(schema);
+        ArgumentNullException.ThrowIfNull(metadata);
+
+        var delay = retryDelay ?? TimeSpan.FromMilliseconds(500);
+        var missing = new List<MissingObject>();
+        var verified = 0;
+
+        foreach (var udt in schema.UserTables)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+
+            var found = await VerifyTableWithRetryAsync(udt.TableName, metadata, delay, cancellationToken)
+                .ConfigureAwait(false);
+
+            if (found)
+            {
+                verified++;
+            }
+            else
+            {
+                missing.Add(new MissingObject
+                {
+                    ObjectType = InstallObjectType.UserTable,
+                    ObjectName = udt.TableName,
+                    Reason = $"SAP did not return metadata for required UserTable '@{udt.TableName}'."
+                });
+            }
+        }
+
+        foreach (var udf in schema.UserFields)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+
+            var objectName = $"{udf.TableName}.U_{udf.Name}";
+            var found = await VerifyFieldWithRetryAsync(udf.TableName, udf.Name, metadata, delay, cancellationToken)
+                .ConfigureAwait(false);
+
+            if (found)
+            {
+                verified++;
+            }
+            else
+            {
+                missing.Add(new MissingObject
+                {
+                    ObjectType = InstallObjectType.UserField,
+                    ObjectName = objectName,
+                    Reason = $"SAP did not return metadata for required UserField '{objectName}'."
+                });
+            }
+        }
+
+        var required = schema.UserTables.Count + schema.UserFields.Count;
+        return new PostValidationReport(missing, verified, required);
+    }
+
+    private static async Task<bool> VerifyTableWithRetryAsync(
+        string tableName,
+        ISapMetadataProvider metadata,
+        TimeSpan retryDelay,
+        CancellationToken cancellationToken)
+    {
+        for (var attempt = 0; attempt < 2; attempt++)
+        {
+            if (attempt > 0 && retryDelay > TimeSpan.Zero)
+                await Task.Delay(retryDelay, cancellationToken).ConfigureAwait(false);
+
+            var table = await metadata.GetTableAsync(tableName).ConfigureAwait(false);
+            if (table is not null) return true;
+        }
+        return false;
+    }
+
+    private static async Task<bool> VerifyFieldWithRetryAsync(
+        string tableName,
+        string fieldName,
+        ISapMetadataProvider metadata,
+        TimeSpan retryDelay,
+        CancellationToken cancellationToken)
+    {
+        for (var attempt = 0; attempt < 2; attempt++)
+        {
+            if (attempt > 0 && retryDelay > TimeSpan.Zero)
+                await Task.Delay(retryDelay, cancellationToken).ConfigureAwait(false);
+
+            var field = await metadata.GetFieldAsync(tableName, fieldName).ConfigureAwait(false);
+            if (field is not null) return true;
+        }
+        return false;
+    }
+
     private static async Task<bool> VerifyEntryWithRetryAsync(
         SchemaApplyEntryResult entry,
         ISapMetadataProvider metadata,
