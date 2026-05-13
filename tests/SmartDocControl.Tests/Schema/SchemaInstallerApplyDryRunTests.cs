@@ -16,8 +16,8 @@ public sealed class SchemaInstallerApplyDryRunTests
         var schema = BuildSchema(
             udts:
             [
-                Udt("JCA_DLC_RULE", "noObject"),
-                Udt("JCA_DLC_EXC", "noObject")
+                Udt("JCA_DLC_RULE", "bott_NoObject"),
+                Udt("JCA_DLC_EXC", "bott_NoObject")
             ]);
         var plan = await _installer.PlanAsync(schema, new InMemorySapMetadata());
         var executor = new InMemorySchemaExecutor();
@@ -35,7 +35,7 @@ public sealed class SchemaInstallerApplyDryRunTests
     public async Task ApplyAsync_DryRunTrue_ExecutorNeverInvoked()
     {
         var schema = BuildSchema(
-            udts: [Udt("JCA_DLC_RULE", "noObject")],
+            udts: [Udt("JCA_DLC_RULE", "bott_NoObject")],
             udfs: [Udf("JCA_DLC_RULE", "Active", "db_Alpha", 1)]);
         var plan = await _installer.PlanAsync(schema, new InMemorySapMetadata());
         var executor = new InMemorySchemaExecutor();
@@ -49,9 +49,9 @@ public sealed class SchemaInstallerApplyDryRunTests
     [Fact]
     public async Task ApplyAsync_DryRunTrue_SkipEntriesStillReportSkipped()
     {
-        var schema = BuildSchema(udts: [Udt("JCA_DLC_RULE", "noObject")]);
+        var schema = BuildSchema(udts: [Udt("JCA_DLC_RULE", "bott_NoObject")]);
         var metadata = new InMemorySapMetadata();
-        metadata.AddTable(new() { TableName = "JCA_DLC_RULE", TableType = "noObject" });
+        metadata.AddTable(new() { TableName = "JCA_DLC_RULE", TableType = "bott_NoObject" });
 
         var plan = await _installer.PlanAsync(schema, metadata);
         var executor = new InMemorySchemaExecutor();
@@ -66,7 +66,7 @@ public sealed class SchemaInstallerApplyDryRunTests
     [Fact]
     public async Task ApplyAsync_DryRunTrue_EmitsDryRunEvents()
     {
-        var schema = BuildSchema(udts: [Udt("JCA_DLC_RULE", "noObject")]);
+        var schema = BuildSchema(udts: [Udt("JCA_DLC_RULE", "bott_NoObject")]);
         var plan = await _installer.PlanAsync(schema, new InMemorySapMetadata());
         var events = new List<string>();
 

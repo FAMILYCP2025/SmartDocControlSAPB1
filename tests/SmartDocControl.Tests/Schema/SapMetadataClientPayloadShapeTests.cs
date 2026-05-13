@@ -26,7 +26,7 @@ public sealed class SapMetadataClientPayloadShapeTests
         {
             TableName = "JCA_DLC_RULE",
             TableDescription = "Rules",
-            TableType = "noObject"
+            TableType = "bott_NoObject"
         });
 
         var props = doc.RootElement.EnumerateObject().Select(p => p.Name).ToArray();
@@ -34,7 +34,7 @@ public sealed class SapMetadataClientPayloadShapeTests
         props.Should().BeEquivalentTo("TableName", "TableDescription", "TableType");
         doc.RootElement.GetProperty("TableName").GetString().Should().Be("JCA_DLC_RULE");
         doc.RootElement.GetProperty("TableDescription").GetString().Should().Be("Rules");
-        doc.RootElement.GetProperty("TableType").GetString().Should().Be("noObject");
+        doc.RootElement.GetProperty("TableType").GetString().Should().Be("bott_NoObject");
     }
 
     // ─── UserField — minimal db_Alpha ─────────────────────────────────────────

@@ -21,7 +21,12 @@ public sealed class DescriptorValidator
 
     private static readonly HashSet<string> KnownTableTypes = new(StringComparer.OrdinalIgnoreCase)
     {
-        "noObject"
+        "bott_NoObject",
+        "bott_NoObjectAutoIncrement",
+        "bott_MasterData",
+        "bott_MasterDataLines",
+        "bott_Document",
+        "bott_DocumentLines"
     };
 
     private const int MaxTableNameLength = 20;

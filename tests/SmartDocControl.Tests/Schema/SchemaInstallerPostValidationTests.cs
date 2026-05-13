@@ -28,7 +28,7 @@ public sealed class SchemaInstallerPostValidationTests
             }
         });
         var metadata = new InMemorySapMetadata();
-        metadata.AddTable(new SapTableMetadata { TableName = "JCA_DLC_RULE", TableType = "noObject" });
+        metadata.AddTable(new SapTableMetadata { TableName = "JCA_DLC_RULE", TableType = "bott_NoObject" });
         metadata.AddField(new SapFieldMetadata
             { TableName = "JCA_DLC_RULE", FieldName = "Active", Type = "db_Alpha", Size = 1 });
 
@@ -58,7 +58,7 @@ public sealed class SchemaInstallerPostValidationTests
             }
         });
         var metadata = new InMemorySapMetadata();
-        metadata.AddTable(new SapTableMetadata { TableName = "JCA_DLC_RULE", TableType = "noObject" });
+        metadata.AddTable(new SapTableMetadata { TableName = "JCA_DLC_RULE", TableType = "bott_NoObject" });
         // JCA_DLC_EXC intentionally NOT registered → should appear in Missing.
 
         var report = await _installer.VerifyAppliedAsync(applyResult, metadata, TimeSpan.Zero);
@@ -109,8 +109,8 @@ public sealed class SchemaInstallerPostValidationTests
             }
         });
         var metadata = new InMemorySapMetadata();
-        metadata.AddTable(new SapTableMetadata { TableName = "JCA_DLC_PRESENT", TableType = "noObject" });
-        metadata.AddTable(new SapTableMetadata { TableName = "JCA_DLC_NEW", TableType = "noObject" });
+        metadata.AddTable(new SapTableMetadata { TableName = "JCA_DLC_PRESENT", TableType = "bott_NoObject" });
+        metadata.AddTable(new SapTableMetadata { TableName = "JCA_DLC_NEW", TableType = "bott_NoObject" });
 
         var report = await _installer.VerifyAppliedAsync(applyResult, metadata, TimeSpan.Zero);
 
@@ -133,7 +133,7 @@ public sealed class SchemaInstallerPostValidationTests
         });
 
         var metadata = new FlakyInMemorySapMetadata(failuresBeforeSuccess: 1);
-        metadata.AddTable(new SapTableMetadata { TableName = "JCA_DLC_RULE", TableType = "noObject" });
+        metadata.AddTable(new SapTableMetadata { TableName = "JCA_DLC_RULE", TableType = "bott_NoObject" });
 
         var report = await _installer.VerifyAppliedAsync(applyResult, metadata, TimeSpan.Zero);
 
@@ -158,7 +158,7 @@ public sealed class SchemaInstallerPostValidationTests
         // Inner metadata is empty AND the flaky wrapper would only start
         // returning data after 5 calls — so within 2 attempts it stays missing.
         var metadata = new FlakyInMemorySapMetadata(failuresBeforeSuccess: 5);
-        metadata.AddTable(new SapTableMetadata { TableName = "JCA_DLC_RULE", TableType = "noObject" });
+        metadata.AddTable(new SapTableMetadata { TableName = "JCA_DLC_RULE", TableType = "bott_NoObject" });
 
         var report = await _installer.VerifyAppliedAsync(applyResult, metadata, TimeSpan.Zero);
 

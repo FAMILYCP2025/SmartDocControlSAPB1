@@ -16,7 +16,7 @@ public sealed class SchemaInstallerPlanTests
     [Fact]
     public async Task Plan_UdtDoesNotExist_ActionIsCreate()
     {
-        var schema = BuildSchema(udts: [Udt("JCA_DLC_RULE", "noObject")]);
+        var schema = BuildSchema(udts: [Udt("JCA_DLC_RULE", "bott_NoObject")]);
         var metadata = new InMemorySapMetadata();
 
         var plan = await _installer.PlanAsync(schema, metadata);
@@ -31,9 +31,9 @@ public sealed class SchemaInstallerPlanTests
     [Fact]
     public async Task Plan_UdtExistsCompatible_ActionIsSkip()
     {
-        var schema = BuildSchema(udts: [Udt("JCA_DLC_RULE", "noObject")]);
+        var schema = BuildSchema(udts: [Udt("JCA_DLC_RULE", "bott_NoObject")]);
         var metadata = new InMemorySapMetadata();
-        metadata.AddTable(new SapTableMetadata { TableName = "JCA_DLC_RULE", TableType = "noObject" });
+        metadata.AddTable(new SapTableMetadata { TableName = "JCA_DLC_RULE", TableType = "bott_NoObject" });
 
         var plan = await _installer.PlanAsync(schema, metadata);
 
@@ -93,11 +93,11 @@ public sealed class SchemaInstallerPlanTests
         var schema = BuildSchema(
             udts:
             [
-                Udt("JCA_DLC_RULE", "noObject"),
-                Udt("JCA_DLC_EXC", "noObject")
+                Udt("JCA_DLC_RULE", "bott_NoObject"),
+                Udt("JCA_DLC_EXC", "bott_NoObject")
             ]);
         var metadata = new InMemorySapMetadata();
-        metadata.AddTable(new SapTableMetadata { TableName = "JCA_DLC_RULE", TableType = "noObject" });
+        metadata.AddTable(new SapTableMetadata { TableName = "JCA_DLC_RULE", TableType = "bott_NoObject" });
 
         var plan = await _installer.PlanAsync(schema, metadata);
 
@@ -112,9 +112,9 @@ public sealed class SchemaInstallerPlanTests
         var schema = BuildSchema(
             udts:
             [
-                Udt("JCA_DLC_SCHEMA", "noObject"),
-                Udt("JCA_DLC_RULE", "noObject"),
-                Udt("JCA_DLC_EXC", "noObject")
+                Udt("JCA_DLC_SCHEMA", "bott_NoObject"),
+                Udt("JCA_DLC_RULE", "bott_NoObject"),
+                Udt("JCA_DLC_EXC", "bott_NoObject")
             ]);
         var metadata = new InMemorySapMetadata();
 
@@ -132,15 +132,15 @@ public sealed class SchemaInstallerPlanTests
         var schema = BuildSchema(
             udts:
             [
-                Udt("JCA_DLC_NEW", "noObject"),
-                Udt("JCA_DLC_EXISTING", "noObject")
+                Udt("JCA_DLC_NEW", "bott_NoObject"),
+                Udt("JCA_DLC_EXISTING", "bott_NoObject")
             ],
             udfs:
             [
                 Udf("JCA_DLC_NEW", "Active", "db_Alpha", 1)
             ]);
         var metadata = new InMemorySapMetadata();
-        metadata.AddTable(new SapTableMetadata { TableName = "JCA_DLC_EXISTING", TableType = "noObject" });
+        metadata.AddTable(new SapTableMetadata { TableName = "JCA_DLC_EXISTING", TableType = "bott_NoObject" });
 
         var plan = await _installer.PlanAsync(schema, metadata);
 

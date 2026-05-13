@@ -17,8 +17,8 @@ public sealed class SchemaInstallerApplyTests
         var schema = BuildSchema(
             udts:
             [
-                Udt("JCA_DLC_RULE", "noObject"),
-                Udt("JCA_DLC_EXC", "noObject")
+                Udt("JCA_DLC_RULE", "bott_NoObject"),
+                Udt("JCA_DLC_EXC", "bott_NoObject")
             ]);
         var plan = await _installer.PlanAsync(schema, new InMemorySapMetadata());
         var executor = new InMemorySchemaExecutor();
@@ -37,11 +37,11 @@ public sealed class SchemaInstallerApplyTests
         var schema = BuildSchema(
             udts:
             [
-                Udt("JCA_DLC_RULE", "noObject"),
-                Udt("JCA_DLC_EXISTING", "noObject")
+                Udt("JCA_DLC_RULE", "bott_NoObject"),
+                Udt("JCA_DLC_EXISTING", "bott_NoObject")
             ]);
         var metadata = new InMemorySapMetadata();
-        metadata.AddTable(new SapTableMetadata { TableName = "JCA_DLC_EXISTING", TableType = "noObject" });
+        metadata.AddTable(new SapTableMetadata { TableName = "JCA_DLC_EXISTING", TableType = "bott_NoObject" });
 
         var plan = await _installer.PlanAsync(schema, metadata);
         var executor = new InMemorySchemaExecutor();
@@ -58,7 +58,7 @@ public sealed class SchemaInstallerApplyTests
     public async Task ApplyAsync_CreateUdf_ResolvesDescriptorAndCallsExecutor()
     {
         var schema = BuildSchema(
-            udts: [Udt("JCA_DLC_RULE", "noObject")],
+            udts: [Udt("JCA_DLC_RULE", "bott_NoObject")],
             udfs: [Udf("JCA_DLC_RULE", "Active", "db_Alpha", 1)]);
         var plan = await _installer.PlanAsync(schema, new InMemorySapMetadata());
         var executor = new InMemorySchemaExecutor();
@@ -91,9 +91,9 @@ public sealed class SchemaInstallerApplyTests
         var schema = BuildSchema(
             udts:
             [
-                Udt("JCA_DLC_SCHEMA", "noObject"),
-                Udt("JCA_DLC_RULE", "noObject"),
-                Udt("JCA_DLC_EXC", "noObject")
+                Udt("JCA_DLC_SCHEMA", "bott_NoObject"),
+                Udt("JCA_DLC_RULE", "bott_NoObject"),
+                Udt("JCA_DLC_EXC", "bott_NoObject")
             ]);
         var plan = await _installer.PlanAsync(schema, new InMemorySapMetadata());
         var executor = new InMemorySchemaExecutor();
@@ -108,7 +108,7 @@ public sealed class SchemaInstallerApplyTests
     [Fact]
     public async Task ApplyAsync_AlreadyExistsWithFlagTrue_CountsAsAlreadyExists()
     {
-        var schema = BuildSchema(udts: [Udt("JCA_DLC_RULE", "noObject")]);
+        var schema = BuildSchema(udts: [Udt("JCA_DLC_RULE", "bott_NoObject")]);
         var plan = await _installer.PlanAsync(schema, new InMemorySapMetadata());
         var executor = new InMemorySchemaExecutor
         {
@@ -128,7 +128,7 @@ public sealed class SchemaInstallerApplyTests
     [Fact]
     public async Task ApplyAsync_AlreadyExistsWithFlagFalse_CountsAsFailed()
     {
-        var schema = BuildSchema(udts: [Udt("JCA_DLC_RULE", "noObject")]);
+        var schema = BuildSchema(udts: [Udt("JCA_DLC_RULE", "bott_NoObject")]);
         var plan = await _installer.PlanAsync(schema, new InMemorySapMetadata());
         var executor = new InMemorySchemaExecutor
         {
@@ -146,7 +146,7 @@ public sealed class SchemaInstallerApplyTests
     [Fact]
     public async Task ApplyAsync_OnEventFires_ForKeyTransitions()
     {
-        var schema = BuildSchema(udts: [Udt("JCA_DLC_RULE", "noObject")]);
+        var schema = BuildSchema(udts: [Udt("JCA_DLC_RULE", "bott_NoObject")]);
         var plan = await _installer.PlanAsync(schema, new InMemorySapMetadata());
         var events = new List<string>();
         var executor = new InMemorySchemaExecutor();

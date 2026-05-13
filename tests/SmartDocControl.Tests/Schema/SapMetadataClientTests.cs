@@ -22,7 +22,7 @@ public sealed class SapMetadataClientTests
                 Content = new StringContent("""
                 {
                   "value": [
-                    { "TableName": "JCA_DLC_RULE", "TableType": "noObject" }
+                    { "TableName": "JCA_DLC_RULE", "TableType": "bott_NoObject" }
                   ]
                 }
                 """)
@@ -34,7 +34,7 @@ public sealed class SapMetadataClientTests
 
         result.Should().NotBeNull();
         result!.TableName.Should().Be("JCA_DLC_RULE");
-        result.TableType.Should().Be("noObject");
+        result.TableType.Should().Be("bott_NoObject");
 
         handler.Requests.Should().ContainSingle();
         handler.Requests[0].RequestUri!.ToString().Should().Contain("UserTablesMD");
@@ -136,7 +136,7 @@ public sealed class SapMetadataClientTests
             Operation = "CreateIfNotExists",
             TableName = "JCA_DLC_RULE",
             TableDescription = "Rules",
-            TableType = "noObject"
+            TableType = "bott_NoObject"
         });
 
         handler.Requests.Should().ContainSingle();
@@ -144,7 +144,7 @@ public sealed class SapMetadataClientTests
         handler.Requests[0].RequestUri!.ToString().Should().EndWith("UserTablesMD");
         capturedBody.Should().Contain("\"TableName\":\"JCA_DLC_RULE\"");
         capturedBody.Should().Contain("\"TableDescription\":\"Rules\"");
-        capturedBody.Should().Contain("\"TableType\":\"noObject\"");
+        capturedBody.Should().Contain("\"TableType\":\"bott_NoObject\"");
     }
 
     [Fact]
@@ -169,7 +169,7 @@ public sealed class SapMetadataClientTests
         {
             TableName = "JCA_DLC_RULE",
             TableDescription = "Rules",
-            TableType = "noObject"
+            TableType = "bott_NoObject"
         });
 
         var ex = (await act.Should().ThrowAsync<SapObjectAlreadyExistsException>()).Which;
@@ -194,7 +194,7 @@ public sealed class SapMetadataClientTests
         {
             TableName = "JCA_DLC_RULE",
             TableDescription = "Rules",
-            TableType = "noObject"
+            TableType = "bott_NoObject"
         });
 
         var ex = (await act.Should().ThrowAsync<SapMetadataException>()).Which;

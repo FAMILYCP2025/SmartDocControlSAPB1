@@ -16,7 +16,7 @@ public sealed class SchemaInstallerDriftTests
     [Fact]
     public async Task Plan_UdtTableTypeDiffers_ActionIsDriftBlocking()
     {
-        var schema = BuildSchema(udts: [Udt("JCA_DLC_RULE", "noObject")]);
+        var schema = BuildSchema(udts: [Udt("JCA_DLC_RULE", "bott_NoObject")]);
         var metadata = new InMemorySapMetadata();
         metadata.AddTable(new SapTableMetadata { TableName = "JCA_DLC_RULE", TableType = "Document" });
 
@@ -27,7 +27,7 @@ public sealed class SchemaInstallerDriftTests
         entry.IsBlocking.Should().BeTrue();
         entry.Reason.Should().Contain("TableType");
         entry.Reason.Should().Contain("Document");
-        entry.Reason.Should().Contain("noObject");
+        entry.Reason.Should().Contain("bott_NoObject");
     }
 
     // ─── UDF drift ────────────────────────────────────────────────────────────
@@ -72,7 +72,7 @@ public sealed class SchemaInstallerDriftTests
     public async Task Plan_MultipleDrifts_AllDetected()
     {
         var schema = BuildSchema(
-            udts: [Udt("JCA_DLC_RULE", "noObject")],
+            udts: [Udt("JCA_DLC_RULE", "bott_NoObject")],
             udfs:
             [
                 Udf("JCA_DLC_RULE", "Active", "db_Alpha", 1),
@@ -95,7 +95,7 @@ public sealed class SchemaInstallerDriftTests
     public async Task Plan_AnyDrift_HasBlockingIssuesIsTrue()
     {
         var schema = BuildSchema(
-            udts: [Udt("JCA_DLC_NEW", "noObject"), Udt("JCA_DLC_DRIFT", "noObject")]);
+            udts: [Udt("JCA_DLC_NEW", "bott_NoObject"), Udt("JCA_DLC_DRIFT", "bott_NoObject")]);
         var metadata = new InMemorySapMetadata();
         metadata.AddTable(new SapTableMetadata { TableName = "JCA_DLC_DRIFT", TableType = "Document" });
 
@@ -109,9 +109,9 @@ public sealed class SchemaInstallerDriftTests
     [Fact]
     public async Task Plan_NoDrift_HasBlockingIssuesIsFalse()
     {
-        var schema = BuildSchema(udts: [Udt("JCA_DLC_RULE", "noObject")]);
+        var schema = BuildSchema(udts: [Udt("JCA_DLC_RULE", "bott_NoObject")]);
         var metadata = new InMemorySapMetadata();
-        metadata.AddTable(new SapTableMetadata { TableName = "JCA_DLC_RULE", TableType = "noObject" });
+        metadata.AddTable(new SapTableMetadata { TableName = "JCA_DLC_RULE", TableType = "bott_NoObject" });
 
         var plan = await _installer.PlanAsync(schema, metadata);
 

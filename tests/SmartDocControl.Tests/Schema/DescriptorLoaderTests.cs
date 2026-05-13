@@ -49,7 +49,7 @@ public sealed class DescriptorLoaderTests : IDisposable
               "operation": "CreateIfNotExists",
               "tableName": "JCA_DLC_RULE",
               "tableDescription": "Rules table",
-              "tableType": "noObject"
+              "tableType": "bott_NoObject"
             }
             """);
 
@@ -73,13 +73,13 @@ public sealed class DescriptorLoaderTests : IDisposable
         WriteFile(dir, "001_udt_a.json", """
             {
               "type": "UserTable", "operation": "CreateIfNotExists",
-              "tableName": "JCA_TABLE_A", "tableDescription": "Table A", "tableType": "noObject"
+              "tableName": "JCA_TABLE_A", "tableDescription": "Table A", "tableType": "bott_NoObject"
             }
             """);
         WriteFile(dir, "002_udt_b.json", """
             {
               "type": "UserTable", "operation": "CreateIfNotExists",
-              "tableName": "JCA_TABLE_B", "tableDescription": "Table B", "tableType": "noObject"
+              "tableName": "JCA_TABLE_B", "tableDescription": "Table B", "tableType": "bott_NoObject"
             }
             """);
 
@@ -103,7 +103,7 @@ public sealed class DescriptorLoaderTests : IDisposable
               "operation": "CreateIfNotExists",
               "tableName": "JCA_DLC_RULE",
               "tableDescription": "Document close rules",
-              "tableType": "noObject"
+              "tableType": "bott_NoObject"
             }
             """);
 
@@ -115,7 +115,7 @@ public sealed class DescriptorLoaderTests : IDisposable
         udt.Operation.Should().Be("CreateIfNotExists");
         udt.TableName.Should().Be("JCA_DLC_RULE");
         udt.TableDescription.Should().Be("Document close rules");
-        udt.TableType.Should().Be("noObject");
+        udt.TableType.Should().Be("bott_NoObject");
     }
 
     [Fact]
@@ -193,7 +193,7 @@ public sealed class DescriptorLoaderTests : IDisposable
         WriteFile(dir, "001_udt.json", """
             {
               "type": "UserTable", "operation": "CreateIfNotExists",
-              "tableName": "JCA_DLC_RULE", "tableDescription": "Rules", "tableType": "noObject"
+              "tableName": "JCA_DLC_RULE", "tableDescription": "Rules", "tableType": "bott_NoObject"
             }
             """);
         WriteFile(dir, "002_udf.json", """

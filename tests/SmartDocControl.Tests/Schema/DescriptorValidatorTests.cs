@@ -82,6 +82,23 @@ public sealed class DescriptorValidatorTests
     }
 
     [Fact]
+    public void Validate_UdtTableType_LegacyNoObject_Throws()
+    {
+        var udt = ValidUdt() with { TableType = "noObject" };
+        var act = () => _validator.Validate(udt);
+        act.Should().Throw<DescriptorValidationException>()
+            .WithMessage("*TableType 'noObject' is not recognized*");
+    }
+
+    [Fact]
+    public void Validate_UdtTableType_BottNoObject_DoesNotThrow()
+    {
+        var udt = ValidUdt() with { TableType = "bott_NoObject" };
+        var act = () => _validator.Validate(udt);
+        act.Should().NotThrow();
+    }
+
+    [Fact]
     public void Validate_UdtUnsupportedTableType_Throws()
     {
         var udt = ValidUdt() with { TableType = "Document" };
@@ -290,7 +307,7 @@ public sealed class DescriptorValidatorTests
         Operation = "CreateIfNotExists",
         TableName = "JCA_DLC_RULE",
         TableDescription = "Document close rules",
-        TableType = "noObject"
+        TableType = "bott_NoObject"
     };
 
     private static UdfDescriptor ValidUdf() => new()

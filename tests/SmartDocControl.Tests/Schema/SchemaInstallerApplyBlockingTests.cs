@@ -14,7 +14,7 @@ public sealed class SchemaInstallerApplyBlockingTests
     [Fact]
     public async Task ApplyAsync_PlanHasBlockingDrift_AbortsWithoutCallingExecutor()
     {
-        var schema = BuildSchema(udts: [Udt("JCA_DLC_RULE", "noObject")]);
+        var schema = BuildSchema(udts: [Udt("JCA_DLC_RULE", "bott_NoObject")]);
         var metadata = new InMemorySapMetadata();
         metadata.AddTable(new SapTableMetadata { TableName = "JCA_DLC_RULE", TableType = "Document" });
 
@@ -37,8 +37,8 @@ public sealed class SchemaInstallerApplyBlockingTests
         var schema = BuildSchema(
             udts:
             [
-                Udt("JCA_DLC_NEW", "noObject"),       // would be Create
-                Udt("JCA_DLC_DRIFT", "noObject")      // becomes Drift
+                Udt("JCA_DLC_NEW", "bott_NoObject"),       // would be Create
+                Udt("JCA_DLC_DRIFT", "bott_NoObject")      // becomes Drift
             ]);
         var metadata = new InMemorySapMetadata();
         metadata.AddTable(new SapTableMetadata { TableName = "JCA_DLC_DRIFT", TableType = "Document" });
@@ -59,9 +59,9 @@ public sealed class SchemaInstallerApplyBlockingTests
         var schema = BuildSchema(
             udts:
             [
-                Udt("JCA_DLC_FAIL", "noObject"),
-                Udt("JCA_DLC_NEXT", "noObject"),
-                Udt("JCA_DLC_LAST", "noObject")
+                Udt("JCA_DLC_FAIL", "bott_NoObject"),
+                Udt("JCA_DLC_NEXT", "bott_NoObject"),
+                Udt("JCA_DLC_LAST", "bott_NoObject")
             ]);
         var plan = await _installer.PlanAsync(schema, new InMemorySapMetadata());
 
@@ -89,8 +89,8 @@ public sealed class SchemaInstallerApplyBlockingTests
         var schema = BuildSchema(
             udts:
             [
-                Udt("JCA_DLC_FAIL", "noObject"),
-                Udt("JCA_DLC_OK", "noObject")
+                Udt("JCA_DLC_FAIL", "bott_NoObject"),
+                Udt("JCA_DLC_OK", "bott_NoObject")
             ]);
         var plan = await _installer.PlanAsync(schema, new InMemorySapMetadata());
 
@@ -114,7 +114,7 @@ public sealed class SchemaInstallerApplyBlockingTests
     [Fact]
     public async Task ApplyAsync_FailedEntryCarriesErrorCodeFromException()
     {
-        var schema = BuildSchema(udts: [Udt("JCA_DLC_FAIL", "noObject")]);
+        var schema = BuildSchema(udts: [Udt("JCA_DLC_FAIL", "bott_NoObject")]);
         var plan = await _installer.PlanAsync(schema, new InMemorySapMetadata());
         var executor = new InMemorySchemaExecutor
         {
@@ -134,8 +134,8 @@ public sealed class SchemaInstallerApplyBlockingTests
         var schema = BuildSchema(
             udts:
             [
-                Udt("JCA_DLC_ONE", "noObject"),
-                Udt("JCA_DLC_TWO", "noObject")
+                Udt("JCA_DLC_ONE", "bott_NoObject"),
+                Udt("JCA_DLC_TWO", "bott_NoObject")
             ]);
         var plan = await _installer.PlanAsync(schema, new InMemorySapMetadata());
         using var cts = new CancellationTokenSource();

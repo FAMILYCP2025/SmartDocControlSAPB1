@@ -3,5 +3,5 @@
   "operation": "CreateIfNotExists",
   "tableName": "JCA_DLC_RULE",
   "tableDescription": "SDC close rules",
-  "tableType": "noObject"
+  "tableType": "bott_NoObject"
 }

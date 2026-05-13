@@ -3,5 +3,5 @@
   "operation": "CreateIfNotExists",
   "tableName": "JCA_DLC_SCHEMA",
   "tableDescription": "SDC schema registry",
-  "tableType": "noObject"
+  "tableType": "bott_NoObject"
 }
