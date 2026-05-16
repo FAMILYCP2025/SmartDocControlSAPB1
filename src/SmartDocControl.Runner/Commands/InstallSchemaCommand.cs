@@ -7,6 +7,7 @@ using SmartDocControl.Infrastructure.ServiceLayer;
 using SmartDocControl.Schema.Install;
 using SmartDocControl.Schema.Loader;
 using SmartDocControl.Schema.Sap;
+using SmartDocControl.Schema.Tracking;
 
 namespace SmartDocControl.Runner.Commands;
 
@@ -25,6 +26,8 @@ internal static class InstallSchemaCommand
 {
     private const string InstallPasswordEnvVar = "SAP_INSTALL_PASSWORD";
     private const string SchemaSubfolder = "schema/v1";
+    // TODO: read from AssemblyInformationalVersion once the app has a formal release version.
+    private const string AppVersion = "0.2.0-alpha";
 
     public static async Task<int> RunAsync(
         AppConfiguration config,
@@ -171,7 +174,10 @@ internal static class InstallSchemaCommand
             if (opts.DryRun)
                 return ExitCodes.Success;
 
-            return await RunRealApplyAsync(installer, plan, loaded, sapClient, metadataProvider, slClient, logger, cancellationToken);
+            var versionRepository = new SchemaVersionRepository(httpClient);
+            return await RunRealApplyAsync(
+                installer, plan, loaded, sapClient, metadataProvider, slClient,
+                versionRepository, runId, opts.Environment, logger, cancellationToken);
         }
         catch (SapAuthenticationException ex)
         {
@@ -205,6 +211,9 @@ internal static class InstallSchemaCommand
         SapMetadataClient sapClient,
         ISapMetadataProvider metadataProvider,
         ServiceLayerClient slClient,
+        SchemaVersionRepository versionRepository,
+        string runId,
+        string environment,
         FileLogger? logger,
         CancellationToken cancellationToken)
     {
@@ -265,7 +274,45 @@ internal static class InstallSchemaCommand
         }
 
         logger?.Information($"Schema apply succeeded. Verified {report.VerifiedCount} object(s).");
-        return ExitCodes.Success;
+
+        Console.WriteLine();
+        Console.WriteLine("SCHEMA VERSION REGISTRATION");
+        Console.WriteLine("===========================");
+
+        var entry = new SchemaVersionEntry
+        {
+            SchemaVersion = loaded.Manifest.SchemaVersion,
+            AppVersion = AppVersion,
+            Environment = environment,
+            AppliedAtUtc = DateTimeOffset.UtcNow,
+            RequiredObjects = report.RequiredCount,
+            VerifiedObjects = report.VerifiedCount,
+            Status = "Success",
+            RunId = runId
+        };
+
+        try
+        {
+            await versionRepository.RegisterAsync(entry, cancellationToken);
+            var saved = Console.ForegroundColor;
+            Console.ForegroundColor = ConsoleColor.Green;
+            Console.WriteLine($"  [OK] Schema version {entry.SchemaVersion} registered in @JCA_DLC_SCHEMA.");
+            Console.ForegroundColor = saved;
+            logger?.Information(
+                $"Schema version {entry.SchemaVersion} registered in @JCA_DLC_SCHEMA (env={environment}, runId={runId}).");
+            return ExitCodes.Success;
+        }
+        catch (Exception ex)
+        {
+            var saved = Console.ForegroundColor;
+            Console.ForegroundColor = ConsoleColor.Red;
+            Console.Error.WriteLine($"  [ERR] Schema version registration failed: {ex.Message}");
+            Console.Error.WriteLine(
+                "        Schema objects are in SAP but the registry row was not written — install is not fully traced.");
+            Console.ForegroundColor = saved;
+            logger?.Error($"Schema version registration failed for env={environment}, runId={runId}.", ex);
+            return ExitCodes.SchemaInstallFailed;
+        }
     }
 
     private static LoadedSchema LoadAndValidateDescriptors(string schemaDir)

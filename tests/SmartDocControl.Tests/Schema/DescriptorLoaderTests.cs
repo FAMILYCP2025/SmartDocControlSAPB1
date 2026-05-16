@@ -212,6 +212,103 @@ public sealed class DescriptorLoaderTests : IDisposable
         result.UserFields.Should().HaveCount(1);
     }
 
+    [Fact]
+    public void Load_SchemaTrackingUdfFile_DeserializesEightFields()
+    {
+        // Mirrors scripts/install/schema/v1/004_udf_schema_fields.json.
+        var dir = CreateTempDir();
+        WriteFile(dir, "manifest.json", """
+            { "schemaVersion": "1.0.0", "steps": ["004_udf_schema_fields.json"] }
+            """);
+        WriteFile(dir, "004_udf_schema_fields.json", """
+            {
+              "type": "UserFields",
+              "operation": "CreateIfNotExists",
+              "tableName": "JCA_DLC_SCHEMA",
+              "fields": [
+                { "name": "SchemaVersion",   "fieldDescription": "Schema version", "type": "db_Alpha",   "size": 20, "mandatory": true },
+                { "name": "AppVersion",      "fieldDescription": "App version",    "type": "db_Alpha",   "size": 20 },
+                { "name": "Environment",     "fieldDescription": "Environment",    "type": "db_Alpha",   "size": 10, "mandatory": true },
+                { "name": "AppliedAtUtc",    "fieldDescription": "Applied UTC",    "type": "db_Alpha",   "size": 30, "mandatory": true },
+                { "name": "RequiredObjects", "fieldDescription": "Required objs",  "type": "db_Numeric", "size": 6,  "mandatory": true },
+                { "name": "VerifiedObjects", "fieldDescription": "Verified objs",  "type": "db_Numeric", "size": 6,  "mandatory": true },
+                { "name": "Status",          "fieldDescription": "Install status", "type": "db_Alpha",   "size": 20, "mandatory": true },
+                { "name": "RunId",           "fieldDescription": "Run ID",         "type": "db_Alpha",   "size": 20 }
+              ]
+            }
+            """);
+
+        var result = _loader.Load(dir);
+
+        result.UserFields.Should().HaveCount(8);
+        result.UserFields.Select(f => f.Name).Should().BeEquivalentTo(new[]
+        {
+            "SchemaVersion", "AppVersion", "Environment", "AppliedAtUtc",
+            "RequiredObjects", "VerifiedObjects", "Status", "RunId"
+        });
+        result.UserFields.Should().AllSatisfy(f => f.TableName.Should().Be("JCA_DLC_SCHEMA"));
+    }
+
+    [Fact]
+    public void Load_FullSchemaV1Layout_Returns2UdtsAnd14Udfs()
+    {
+        // Simulates the production schema/v1 layout: 2 UDTs + 6 UDFs (RULE) + 8 UDFs (SCHEMA) = 16 objects.
+        var dir = CreateTempDir();
+        WriteFile(dir, "manifest.json", """
+            {
+              "schemaVersion": "1.0.0",
+              "steps": [
+                "001_udt_schema_version.json",
+                "002_udt_rule.json",
+                "003_udf_rule_fields.json",
+                "004_udf_schema_fields.json"
+              ]
+            }
+            """);
+        WriteFile(dir, "001_udt_schema_version.json", """
+            { "type": "UserTable", "operation": "CreateIfNotExists",
+              "tableName": "JCA_DLC_SCHEMA", "tableDescription": "SDC schema registry", "tableType": "bott_NoObject" }
+            """);
+        WriteFile(dir, "002_udt_rule.json", """
+            { "type": "UserTable", "operation": "CreateIfNotExists",
+              "tableName": "JCA_DLC_RULE", "tableDescription": "Document close rules", "tableType": "bott_NoObject" }
+            """);
+        WriteFile(dir, "003_udf_rule_fields.json", """
+            {
+              "type": "UserFields", "operation": "CreateIfNotExists", "tableName": "JCA_DLC_RULE",
+              "fields": [
+                { "name": "Active",             "fieldDescription": "Active",   "type": "db_Alpha",   "size": 1 },
+                { "name": "ObjType",            "fieldDescription": "Obj type", "type": "db_Alpha",   "size": 20, "mandatory": true },
+                { "name": "EntitySet",          "fieldDescription": "Set",      "type": "db_Alpha",   "size": 50, "mandatory": true },
+                { "name": "GraceDays",          "fieldDescription": "Grace",    "type": "db_Numeric", "size": 6,  "mandatory": true },
+                { "name": "Simulation",         "fieldDescription": "Sim",      "type": "db_Alpha",   "size": 1 },
+                { "name": "MaxDocumentsPerRun", "fieldDescription": "MaxDocs",  "type": "db_Numeric", "size": 6 }
+              ]
+            }
+            """);
+        WriteFile(dir, "004_udf_schema_fields.json", """
+            {
+              "type": "UserFields", "operation": "CreateIfNotExists", "tableName": "JCA_DLC_SCHEMA",
+              "fields": [
+                { "name": "SchemaVersion",   "fieldDescription": "Schema version", "type": "db_Alpha",   "size": 20, "mandatory": true },
+                { "name": "AppVersion",      "fieldDescription": "App version",    "type": "db_Alpha",   "size": 20 },
+                { "name": "Environment",     "fieldDescription": "Environment",    "type": "db_Alpha",   "size": 10, "mandatory": true },
+                { "name": "AppliedAtUtc",    "fieldDescription": "Applied UTC",    "type": "db_Alpha",   "size": 30, "mandatory": true },
+                { "name": "RequiredObjects", "fieldDescription": "Required objs",  "type": "db_Numeric", "size": 6,  "mandatory": true },
+                { "name": "VerifiedObjects", "fieldDescription": "Verified objs",  "type": "db_Numeric", "size": 6,  "mandatory": true },
+                { "name": "Status",          "fieldDescription": "Install status", "type": "db_Alpha",   "size": 20, "mandatory": true },
+                { "name": "RunId",           "fieldDescription": "Run ID",         "type": "db_Alpha",   "size": 20 }
+              ]
+            }
+            """);
+
+        var result = _loader.Load(dir);
+
+        result.UserTables.Should().HaveCount(2);
+        result.UserFields.Should().HaveCount(14);
+        (result.UserTables.Count + result.UserFields.Count).Should().Be(16);
+    }
+
     // ─── Error paths ──────────────────────────────────────────────────────────
 
     [Fact]

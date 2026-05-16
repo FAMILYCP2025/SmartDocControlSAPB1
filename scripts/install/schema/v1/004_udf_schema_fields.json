@@ -1,0 +1,61 @@
+{
+  "type": "UserFields",
+  "operation": "CreateIfNotExists",
+  "tableName": "JCA_DLC_SCHEMA",
+  "fields": [
+    {
+      "name": "SchemaVersion",
+      "fieldDescription": "Schema version",
+      "type": "db_Alpha",
+      "size": 20,
+      "mandatory": true
+    },
+    {
+      "name": "AppVersion",
+      "fieldDescription": "App version",
+      "type": "db_Alpha",
+      "size": 20
+    },
+    {
+      "name": "Environment",
+      "fieldDescription": "Environment",
+      "type": "db_Alpha",
+      "size": 10,
+      "mandatory": true
+    },
+    {
+      "name": "AppliedAtUtc",
+      "fieldDescription": "Applied UTC",
+      "type": "db_Alpha",
+      "size": 30,
+      "mandatory": true
+    },
+    {
+      "name": "RequiredObjects",
+      "fieldDescription": "Required objs",
+      "type": "db_Numeric",
+      "size": 6,
+      "mandatory": true
+    },
+    {
+      "name": "VerifiedObjects",
+      "fieldDescription": "Verified objs",
+      "type": "db_Numeric",
+      "size": 6,
+      "mandatory": true
+    },
+    {
+      "name": "Status",
+      "fieldDescription": "Install status",
+      "type": "db_Alpha",
+      "size": 20,
+      "mandatory": true
+    },
+    {
+      "name": "RunId",
+      "fieldDescription": "Run ID",
+      "type": "db_Alpha",
+      "size": 20
+    }
+  ]
+}

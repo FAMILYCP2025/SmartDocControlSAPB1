@@ -262,6 +262,49 @@ public sealed class DescriptorValidatorTests
         act.Should().Throw<DescriptorValidationException>();
     }
 
+    // ─── Schema tracking UDFs (12I) ───────────────────────────────────────────
+
+    [Fact]
+    public void Validate_UdfDbNumericMandatory_DoesNotThrow()
+    {
+        var udf = ValidUdf() with { Type = "db_Numeric", Size = 6, Mandatory = true };
+        var act = () => _validator.Validate(udf);
+        act.Should().NotThrow();
+    }
+
+    [Fact]
+    public void Validate_SchemaTrackingFields_AllAccepted()
+    {
+        // Mirrors fields in scripts/install/schema/v1/004_udf_schema_fields.json.
+        var fields = new[]
+        {
+            Udf("SchemaVersion",   "db_Alpha",   20, mandatory: true),
+            Udf("AppVersion",      "db_Alpha",   20, mandatory: false),
+            Udf("Environment",     "db_Alpha",   10, mandatory: true),
+            Udf("AppliedAtUtc",    "db_Alpha",   30, mandatory: true),
+            Udf("RequiredObjects", "db_Numeric", 6,  mandatory: true),
+            Udf("VerifiedObjects", "db_Numeric", 6,  mandatory: true),
+            Udf("Status",          "db_Alpha",   20, mandatory: true),
+            Udf("RunId",           "db_Alpha",   20, mandatory: false)
+        };
+
+        foreach (var udf in fields)
+        {
+            var act = () => _validator.Validate(udf);
+            act.Should().NotThrow($"because '{udf.Name}' is a valid schema tracking UDF");
+        }
+    }
+
+    private static UdfDescriptor Udf(string name, string type, int size, bool mandatory) => new()
+    {
+        TableName = "JCA_DLC_SCHEMA",
+        Name = name,
+        FieldDescription = name,
+        Type = type,
+        Size = size,
+        Mandatory = mandatory
+    };
+
     // ─── SchemaManifest ───────────────────────────────────────────────────────
 
     [Fact]
